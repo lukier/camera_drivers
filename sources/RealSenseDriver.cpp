@@ -109,7 +109,14 @@ void drivers::camera::RealSense::open(unsigned int idx)
     m_cinfo.SensorResolution = std::string("NA");
     m_cinfo.DriverName = std::string("libRealSense");
     m_cinfo.FirmwareVersion = std::string(m_pimpl->device->get_firmware_version());
-    m_cinfo.FirmwareBuildTime = std::string(m_pimpl->device->get_info(rs::camera_info::build_date));
+    if(m_pimpl->device->supports(rs::camera_info::build_date))
+    {
+        m_cinfo.FirmwareBuildTime = std::string(m_pimpl->device->get_info(rs::camera_info::build_date));
+    }
+    else
+    {
+        m_cinfo.FirmwareBuildTime = std::string("NA");
+    }
 }
 
 bool drivers::camera::RealSense::isOpenedImpl() const
