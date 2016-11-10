@@ -97,6 +97,7 @@ endif()
 find_package(OpenNI2 QUIET)
 find_package(LibRealSense QUIET)
 find_package(freenect2 QUIET)
+find_package(IDSuEye QUIET)
 
 # --------------------------------------------------------------------------------
 # Sources
@@ -110,6 +111,7 @@ PointGreyDriver.hpp
 RealSenseDriver.hpp
 V4LDriver.hpp
 VRMagicDriver.hpp
+#IDSuEyeDriver.hpp
 )
 
 set(SOURCES
@@ -151,6 +153,12 @@ if(freenect2_FOUND)
     message("FOUND: freenect2")
     set(CAMERADRIVERS_SUPPORTS_KINECTONE ON)
     list(APPEND SOURCES sources/KinectOneDriver.cpp)
+endif()
+
+if(IDSUEYE_FOUND)
+    message("FOUND: IDS uEye")
+    set(CAMERADRIVERS_SUPPORTS_IDSUEYE ON)
+    #list(APPEND SOURCES sources/IDSuEyeDriver.cpp)
 endif()
 
 # --------------------------------------------------------------------------------
@@ -197,6 +205,11 @@ if(LIBREALSENSE_FOUND)
 endif()
 if(freenect2_FOUND)
     target_link_libraries(${PROJECT_NAME} PRIVATE ${freenect2_LIBRARIES})
+    target_include_directories(${PROJECT_NAME} PRIVATE ${LIBREALSENSE_INCLUDE_DIR})
+    target_link_libraries(${PROJECT_NAME} PRIVATE ${LIBREALSENSE_LIBRARY})
+endif()
+if(IDSUEYE_FOUND)
+    target_link_libraries(${PROJECT_NAME} PRIVATE ${IDSUEYE_LIBRARY})
     target_include_directories(${PROJECT_NAME} PRIVATE ${LIBREALSENSE_INCLUDE_DIR})
     target_link_libraries(${PROJECT_NAME} PRIVATE ${LIBREALSENSE_LIBRARY})
 endif()

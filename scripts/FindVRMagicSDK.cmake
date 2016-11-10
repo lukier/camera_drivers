@@ -5,7 +5,6 @@ find_path(VRMAGICSDK_INCLUDE_DIRS2 NAMES vrmusbcamcpp.h PATHS /opt/vrmagic/sdk-4
 find_file(VRMAGICSDK_CPP_WRAPPER NAMES vrmusbcamcpp.cpp PATHS /opt/vrmagic/sdk-4.3.0/x64/development_kit/wrappers/c++)
 find_library(VRMAGICSDK_LIBRARIES NAMES vrmusbcam2 PATHS /opt/vrmagic/sdk-4.3.0/x64/development_kit/lib)
 
-# Handle the REQUIRED argument and set the <UPPERCASED_NAME>_FOUND variable
 find_package_handle_standard_args(VRMagicSDK "Could NOT find VRMagic SDK." VRMAGICSDK_LIBRARIES VRMAGICSDK_INCLUDE_DIRS1 VRMAGICSDK_INCLUDE_DIRS2 VRMAGICSDK_CPP_WRAPPER)
 
 if(VRMAGICSDK_FOUND)
