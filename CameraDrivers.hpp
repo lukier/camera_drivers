@@ -593,6 +593,23 @@ public:
         return isStartedImpl();
     }
     
+    virtual bool getFeaturePower(EFeature fidx) { return false; }
+    virtual void setFeaturePower(EFeature fidx, bool b) { }
+    virtual bool getFeatureAuto(EFeature fidx) { return false; }
+    virtual void setFeatureAuto(EFeature fidx, bool b) { }
+    virtual uint32_t getFeatureValue(EFeature fidx){ return 0; }
+    virtual float getFeatureValueAbs(EFeature fidx){ return 0.0f; }
+    virtual uint32_t getFeatureMin(EFeature fidx) { return 0; }
+    virtual uint32_t getFeatureMax(EFeature fidx) { return 0; }
+    virtual void setFeatureValue(EFeature fidx, uint32_t val) { }
+    virtual void setFeatureValueAbs(EFeature fidx, float val) { }
+    virtual void setFeature(EFeature fidx, bool power, bool automatic, uint32_t val) 
+    {
+        setFeaturePower(fidx, power);
+        setFeatureAuto(fidx, automatic);
+        setFeatureValue(fidx, val);
+    }
+    
     template<typename _Rep = int64_t, typename _Period = std::ratio<1>>
     bool captureFrame(FrameBuffer& cf1, const std::chrono::duration<_Rep, _Period>& timeout = std::chrono::seconds(0))
     {

@@ -511,10 +511,4 @@ void drivers::camera::FireWire::setFeatureValueAbs(EFeature fidx, float val)
     FIREWIRE_CHECK_ERROR(err);
 }
 
-void drivers::camera::FireWire::setFeature(EFeature fidx, bool power, bool automatic, uint32_t val)
-{
-    setFeaturePower(fidx, power);
-    setFeatureAuto(fidx, automatic);
-    setFeatureValue(fidx, val);
-}
 

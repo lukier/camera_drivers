@@ -48,6 +48,25 @@ drivers::camera::RealSense::RealSenseException::RealSenseException(int status, c
 
 #define RS_CHECK_ERROR(err_code) { if(err_code != openni::STATUS_OK) { throw OpenNIException(err_code, __FILE__, __LINE__); } }
 
+static inline bool getRSOption(drivers::camera::EFeature fidx, rs::option& opt, bool isauto = false)
+{
+    switch(fidx)
+    {
+        case drivers::camera::EFeature::BRIGHTNESS: opt = rs::option::color_brightness; return true;
+        case drivers::camera::EFeature::AUTO_EXPOSURE: opt = rs::option::color_enable_auto_exposure; return true;
+        case drivers::camera::EFeature::SHARPNESS: opt = rs::option::color_sharpness; return true;
+        case drivers::camera::EFeature::WHITE_BALANCE: if(!isauto) { opt = rs::option::color_white_balance; } else { opt = rs::option::color_white_balance; } return true;
+        case drivers::camera::EFeature::HUE: opt = rs::option::color_hue; return true;
+        case drivers::camera::EFeature::SATURATION: opt = rs::option::color_saturation; return true;
+        case drivers::camera::EFeature::GAMMA: opt = rs::option::color_gamma; return true;
+        case drivers::camera::EFeature::SHUTTER: opt = rs::option::color_exposure; return true;
+        case drivers::camera::EFeature::GAIN: opt = rs::option::color_gain; return true;
+        case drivers::camera::EFeature::TEMPERATURE: opt = rs::option::color_backlight_compensation; return true;
+        default: return false;
+    }
+}
+
+
 struct drivers::camera::RealSense::RealSenseAPIPimpl
 {
     RealSenseAPIPimpl() : color_valid(false), depth_valid(false), ir1_valid(false), ir2_valid(false), device(nullptr)
@@ -518,6 +537,86 @@ void drivers::camera::RealSense::getIR2Intrinsics(::camera::PinholeDisparityBrow
                                             (float)getIR2Width(), (float)getIR2Height());
 }
 #endif // CAMERA_DRIVERS_HAVE_CAMERA_MODELS
+
+bool drivers::camera::RealSense::getFeatureAuto(EFeature fidx)
+{
+    rs::option opt;
+    if(!getRSOption(fidx,opt)) { return false; }
+    
+    if(m_pimpl->device->supports_option(opt))
+    {
+        return m_pimpl->device->get_option(opt) > 0.0f;
+    }
+    
+    return false;
+}
+
+void drivers::camera::RealSense::setFeatureAuto(EFeature fidx, bool b)
+{
+    rs::option opt;
+    if(!getRSOption(fidx,opt)) { return; }
+    
+    if(m_pimpl->device->supports_option(opt))
+    {
+        m_pimpl->device->set_option(opt, b == true ? 1.0 : 0.0);
+    }
+}
+
+float drivers::camera::RealSense::getFeatureValueAbs(EFeature fidx)
+{
+    rs::option opt;
+    if(!getRSOption(fidx,opt)) { return 0.0f; }
+    
+    if(m_pimpl->device->supports_option(opt))
+    {
+        return m_pimpl->device->get_option(opt);
+    }
+    
+    return 0.0f;
+}
+
+uint32_t drivers::camera::RealSense::getFeatureMin(EFeature fidx)
+{
+    rs::option opt;
+    if(!getRSOption(fidx,opt)) { return 0; }
+    
+    double vmin, vmax, vstep;
+    
+    if(m_pimpl->device->supports_option(opt))
+    {
+        m_pimpl->device->get_option_range(opt, vmin, vmax, vstep);
+        return (uint32_t)vmin;
+    }
+    
+    return 0.0f;
+}
+
+uint32_t drivers::camera::RealSense::getFeatureMax(EFeature fidx)
+{
+    rs::option opt;
+    if(!getRSOption(fidx,opt)) { return 0; }
+    
+    double vmin, vmax, vstep;
+    
+    if(m_pimpl->device->supports_option(opt))
+    {
+        m_pimpl->device->get_option_range(opt, vmin, vmax, vstep);
+        return (uint32_t)vmax;
+    }
+    
+    return 0.0f;
+}
+
+void drivers::camera::RealSense::setFeatureValueAbs(EFeature fidx, float val)
+{
+    rs::option opt;
+    if(!getRSOption(fidx,opt)) { return; }
+    
+    if(m_pimpl->device->supports_option(opt))
+    {
+        m_pimpl->device->set_option(opt, val);
+    }
+}
 
 bool drivers::camera::RealSense::captureFrameImpl(FrameBuffer* cf1, FrameBuffer* cf2, FrameBuffer* cf3, FrameBuffer* cf4, int64_t timeout)
 {

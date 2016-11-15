@@ -863,3 +863,71 @@ void drivers::camera::OpenNI::OpenNIRecorder::stop()
     is_recording = false;
     recorder->stop();
 }
+
+bool drivers::camera::OpenNI::getFeatureAuto(EFeature fidx)
+{
+    switch(fidx)
+    {
+        case EFeature::AUTO_EXPOSURE: return m_pimpl->vs_rgb.getCameraSettings()->getAutoExposureEnabled();
+        case EFeature::WHITE_BALANCE: return m_pimpl->vs_rgb.getCameraSettings()->getAutoWhiteBalanceEnabled();
+        default: return false;
+    }
+}
+
+void drivers::camera::OpenNI::setFeatureAuto(EFeature fidx, bool b)
+{
+    switch(fidx)
+    {
+        case EFeature::AUTO_EXPOSURE: m_pimpl->vs_rgb.getCameraSettings()->setAutoExposureEnabled(b); break;
+        case EFeature::WHITE_BALANCE: m_pimpl->vs_rgb.getCameraSettings()->setAutoWhiteBalanceEnabled(b); break;
+        default: return;
+    }
+}
+
+float drivers::camera::OpenNI::getFeatureValueAbs(EFeature fidx)
+{
+    switch(fidx)
+    {
+        case EFeature::AUTO_EXPOSURE: return m_pimpl->vs_rgb.getCameraSettings()->getAutoExposureEnabled();
+        case EFeature::WHITE_BALANCE: return m_pimpl->vs_rgb.getCameraSettings()->getAutoWhiteBalanceEnabled();
+        case EFeature::SHUTTER: return m_pimpl->vs_rgb.getCameraSettings()->getExposure();
+        case EFeature::GAIN: return m_pimpl->vs_rgb.getCameraSettings()->getGain();
+        default: return 0.0f;
+    }
+}
+
+uint32_t drivers::camera::OpenNI::getFeatureMin(EFeature fidx)
+{
+    switch(fidx)
+    {
+        case EFeature::AUTO_EXPOSURE: return 0;
+        case EFeature::WHITE_BALANCE: return 0;
+        case EFeature::SHUTTER: return 0;
+        case EFeature::GAIN: return 0;
+        default: return 0;
+    }
+}
+
+uint32_t drivers::camera::OpenNI::getFeatureMax(EFeature fidx)
+{
+    switch(fidx)
+    {
+        case EFeature::AUTO_EXPOSURE: return 1;
+        case EFeature::WHITE_BALANCE: return 1;
+        case EFeature::SHUTTER: return 100;
+        case EFeature::GAIN: return 100;
+        default: return 0;
+    }
+}
+
+void drivers::camera::OpenNI::setFeatureValueAbs(EFeature fidx, float val)
+{
+    switch(fidx)
+    {
+        case EFeature::AUTO_EXPOSURE: m_pimpl->vs_rgb.getCameraSettings()->setAutoExposureEnabled(val > 0.0f ? true : false); break;
+        case EFeature::WHITE_BALANCE: m_pimpl->vs_rgb.getCameraSettings()->setAutoWhiteBalanceEnabled(val > 0.0f ? true : false); break;
+        case EFeature::SHUTTER: m_pimpl->vs_rgb.getCameraSettings()->setExposure((int)val); break;
+        case EFeature::GAIN: m_pimpl->vs_rgb.getCameraSettings()->setGain((int)val); break;
+        default: return;
+    }
+}

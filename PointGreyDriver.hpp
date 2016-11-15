@@ -93,17 +93,17 @@ public:
     void setModeAndFramerate(EVideoMode vmode, EFrameRate framerate);
     void setCustomMode(EPixelFormat pixfmt, unsigned int width, unsigned int height, unsigned int offset_x = 0, unsigned int offset_y = 0, uint16_t format7mode = 0);
     
-    bool getFeaturePower(EFeature fidx);
-    void setFeaturePower(EFeature fidx, bool b);
-    bool getFeatureAuto(EFeature fidx);
-    void setFeatureAuto(EFeature fidx, bool b);
-    uint32_t getFeatureValue(EFeature fidx);
-    float getFeatureValueAbs(EFeature fidx);
-    uint32_t getFeatureMin(EFeature fidx);
-    uint32_t getFeatureMax(EFeature fidx);
-    void setFeatureValue(EFeature fidx, uint32_t val);
-    void setFeatureValueAbs(EFeature fidx, float val);
-    void setFeature(EFeature fidx, bool power, bool automatic, uint32_t val);
+    virtual bool getFeaturePower(EFeature fidx);
+    virtual void setFeaturePower(EFeature fidx, bool b);
+    virtual bool getFeatureAuto(EFeature fidx);
+    virtual void setFeatureAuto(EFeature fidx, bool b);
+    virtual uint32_t getFeatureValue(EFeature fidx);
+    virtual float getFeatureValueAbs(EFeature fidx);
+    virtual uint32_t getFeatureMin(EFeature fidx);
+    virtual uint32_t getFeatureMax(EFeature fidx);
+    virtual void setFeatureValue(EFeature fidx, uint32_t val);
+    virtual void setFeatureValueAbs(EFeature fidx, float val);
+    virtual void setFeature(EFeature fidx, bool power, bool automatic, uint32_t val);
     
     std::size_t getWidth() const { return m_width; }
     std::size_t getHeight() const { return m_height; }

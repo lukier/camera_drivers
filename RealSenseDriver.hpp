@@ -60,6 +60,18 @@ namespace camera
     
 /**
  * RealSense Driver.
+ * 
+ * Supports:
+ * BRIGHTNESS - brightness
+ * AUTO_EXPOSURE - automatic exposure
+ * SHARPNESS - sharpness
+ * WHITE_BALANCE - (auto)white balance
+ * HUE - hue
+ * SATURATION  -saturation
+ * GAMMA - gamma
+ * SHUTTER - manual exposure
+ * GAIN - gain
+ * TEMPERATURE - backlight compensation
  */
 class RealSense : public CameraDriverBase
 {
@@ -131,6 +143,16 @@ public:
     void getIR2Intrinsics(::camera::PinholeCameraModel<float>& cam) const;
     void getIR2Intrinsics(::camera::PinholeDisparityBrownConradyCameraModel<float>& cam) const;
 #endif // CAMERA_DRIVERS_HAVE_CAMERA_MODELS
+
+    virtual bool getFeaturePower(EFeature fidx) { return true; }
+    virtual bool getFeatureAuto(EFeature fidx);
+    virtual void setFeatureAuto(EFeature fidx, bool b);
+    virtual uint32_t getFeatureValue(EFeature fidx) { return (uint32_t)getFeatureValueAbs(fidx); }
+    virtual float getFeatureValueAbs(EFeature fidx);
+    virtual uint32_t getFeatureMin(EFeature fidx);
+    virtual uint32_t getFeatureMax(EFeature fidx);
+    virtual void setFeatureValue(EFeature fidx, uint32_t val) { setFeatureValueAbs(fidx, (float)val); }
+    virtual void setFeatureValueAbs(EFeature fidx, float val);
 private:
     virtual bool isOpenedImpl() const;
     virtual bool isStartedImpl() const { return is_running; }

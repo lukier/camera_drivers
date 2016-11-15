@@ -65,7 +65,12 @@ namespace camera
     
 /**
  * OpenNI Driver.
- * @todo
+ * 
+ * Supports:
+ * AUTO_EXPOSURE - automatic exposure
+ * WHITE_BALANCE - automatic white balance
+ * SHUTTER - manual exposure
+ * GAIN - manual gain
  */
 class OpenNI : public CameraDriverBase
 {
@@ -167,6 +172,16 @@ public:
     void getDepthIntrinsics(::camera::PinholeCameraModel<float>& cam) const;
     void getIRIntrinsics(::camera::PinholeCameraModel<float>& cam) const;
 #endif // CAMERA_DRIVERS_HAVE_CAMERA_MODELS
+    
+    virtual bool getFeaturePower(EFeature fidx) { return true; }
+    virtual bool getFeatureAuto(EFeature fidx);
+    virtual void setFeatureAuto(EFeature fidx, bool b);
+    virtual uint32_t getFeatureValue(EFeature fidx) { return (uint32_t)getFeatureValueAbs(fidx); }
+    virtual float getFeatureValueAbs(EFeature fidx);
+    virtual uint32_t getFeatureMin(EFeature fidx);
+    virtual uint32_t getFeatureMax(EFeature fidx);
+    virtual void setFeatureValue(EFeature fidx, uint32_t val) { setFeatureValueAbs(fidx, (float)val); }
+    virtual void setFeatureValueAbs(EFeature fidx, float val);
 private:
     friend class OpenNIRecorder;
     void image_release(void* img);
