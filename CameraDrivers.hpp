@@ -610,6 +610,11 @@ public:
         setFeatureValue(fidx, val);
     }
     
+    /**
+     * By convention, if the streams are enabled the order should be as follows:
+     * Depth , RGBD , Infrared1, Infrared2
+     */
+    
     template<typename _Rep = int64_t, typename _Period = std::ratio<1>>
     bool captureFrame(FrameBuffer& cf1, const std::chrono::duration<_Rep, _Period>& timeout = std::chrono::seconds(0))
     {

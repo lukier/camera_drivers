@@ -640,21 +640,21 @@ bool drivers::camera::RealSense::captureFrameImpl(FrameBuffer* cf1, FrameBuffer*
 
     if(m_pimpl->color_valid && m_pimpl->depth_valid && m_pimpl->ir1_valid && m_pimpl->ir2_valid) // 4 R D I1 I2
     {
-        setupFrame(cf1, m_pimpl->default_color_stream, getRGBPixelFormat());
-        setupFrame(cf2, m_pimpl->default_depth_stream, getDepthPixelFormat());
+        setupFrame(cf1, m_pimpl->default_depth_stream, getDepthPixelFormat());
+        setupFrame(cf2, m_pimpl->default_color_stream, getRGBPixelFormat());
         setupFrame(cf3, m_pimpl->default_ir1_stream, getIR1PixelFormat());
         setupFrame(cf4, m_pimpl->default_ir2_stream, getIR2PixelFormat());
     }
     else if(m_pimpl->color_valid && m_pimpl->depth_valid && m_pimpl->ir1_valid && !m_pimpl->ir2_valid) // 3 R D I1
     {
-        setupFrame(cf1, m_pimpl->default_color_stream, getRGBPixelFormat());
-        setupFrame(cf2, m_pimpl->default_depth_stream, getDepthPixelFormat());
+        setupFrame(cf1, m_pimpl->default_depth_stream, getDepthPixelFormat());
+        setupFrame(cf2, m_pimpl->default_color_stream, getRGBPixelFormat());
         setupFrame(cf3, m_pimpl->default_ir1_stream, getIR1PixelFormat());
     }
     else if(m_pimpl->color_valid && m_pimpl->depth_valid && !m_pimpl->ir1_valid && m_pimpl->ir2_valid) // 3 R D I2
     {
-        setupFrame(cf1, m_pimpl->default_color_stream, getRGBPixelFormat());
-        setupFrame(cf2, m_pimpl->default_depth_stream, getDepthPixelFormat());
+        setupFrame(cf1, m_pimpl->default_depth_stream, getDepthPixelFormat());
+        setupFrame(cf2, m_pimpl->default_color_stream, getRGBPixelFormat());
         setupFrame(cf3, m_pimpl->default_ir2_stream, getIR2PixelFormat());
     }
     else if(m_pimpl->color_valid && !m_pimpl->depth_valid && m_pimpl->ir1_valid && m_pimpl->ir2_valid) // 3 R I1 I2
@@ -671,8 +671,8 @@ bool drivers::camera::RealSense::captureFrameImpl(FrameBuffer* cf1, FrameBuffer*
     }
     else if(m_pimpl->color_valid && m_pimpl->depth_valid && !m_pimpl->ir1_valid && !m_pimpl->ir2_valid) // 2 R D
     {
-        setupFrame(cf1, m_pimpl->default_color_stream, getRGBPixelFormat());
-        setupFrame(cf2, m_pimpl->default_depth_stream, getDepthPixelFormat());
+        setupFrame(cf1, m_pimpl->default_depth_stream, getDepthPixelFormat());
+        setupFrame(cf2, m_pimpl->default_color_stream, getRGBPixelFormat());
     }
     else if(m_pimpl->color_valid && !m_pimpl->depth_valid && m_pimpl->ir1_valid && !m_pimpl->ir2_valid) // 2 R I1
     {
