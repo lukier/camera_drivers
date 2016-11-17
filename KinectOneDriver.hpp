@@ -48,6 +48,10 @@
 
 #include <CameraDrivers.hpp>
 
+#ifdef CAMERA_DRIVERS_HAVE_CAMERA_MODELS
+#include <CameraModels.hpp>
+#endif // CAMERA_DRIVERS_HAVE_CAMERA_MODELS
+
 namespace drivers
 {
 
@@ -65,7 +69,7 @@ public:
     KinectOne();
     virtual ~KinectOne();
     
-    void open(unsigned int idx = 0, bool depth = true, bool rgb = true, bool ir = false);
+    void open(unsigned int idx = 0, bool depth = true, bool rgb = true, bool registered = true, bool ir = false);
     void close();
     
     void start();
@@ -82,8 +86,15 @@ public:
     std::size_t getIRWidth() const;
     std::size_t getIRHeight() const;
     EPixelFormat getIRPixelFormat() const;
+    
+    void getRegisteredIntrinsics(float& fx, float& fy, float& u0, float& v0) const;
+    
+#ifdef CAMERA_DRIVERS_HAVE_CAMERA_MODELS
+    void getRegistereIntrinsics(::camera::PinholeCameraModel<float>& cam) const;
+#endif // CAMERA_DRIVERS_HAVE_CAMERA_MODELS
 private:
     void image_release(void* img);
+    void image_release_nothing(void* img);
     
     virtual bool isOpenedImpl() const;
     virtual bool isStartedImpl() const { return is_running; }
