@@ -5,7 +5,14 @@ This is a small collection C++11 classes to interface with machine vision and RG
 
 
 ## Features
-TBD
+* PointGrey FlyCapture2 wrapper.
+* DC1394 wrapper.
+* OpenNI2 wrapper.
+* libRealsense wrapper.
+* VRMagic SDK wrapper.
+* libfreenect2 (KinectOne) wrapper (WIP).
+* V4L2 wrapper (WIP).
+* IDS uEye SDK wrapper (WIP).
 
 ## TODO
 A lot, nothing here is tested. Some drivers unfinished.
