@@ -69,7 +69,7 @@ public:
     KinectOne();
     virtual ~KinectOne();
     
-    void open(unsigned int idx = 0, bool depth = true, bool rgb = true, bool registered = true, bool ir = false);
+    void open(unsigned int idx = 0, bool depth = true, bool rgb = true, bool registered = true);
     void close();
     
     void start();
@@ -82,10 +82,6 @@ public:
     std::size_t getDepthWidth() const;
     std::size_t getDepthHeight() const;
     EPixelFormat getDepthPixelFormat() const;
-    
-    std::size_t getIRWidth() const;
-    std::size_t getIRHeight() const;
-    EPixelFormat getIRPixelFormat() const;
     
     void getRegisteredIntrinsics(float& fx, float& fy, float& u0, float& v0) const;
     

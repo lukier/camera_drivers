@@ -40,6 +40,7 @@ static const char* PixelFormatToStringMap[] =
     "PIXEL_FORMAT_MONO8",
     "PIXEL_FORMAT_MONO16",
     "PIXEL_FORMAT_RGB8",
+    "PIXEL_FORMAT_RGBA8",
     "PIXEL_FORMAT_MONO32F",
     "PIXEL_FORMAT_RGB32F",
     "PIXEL_FORMAT_DEPTH_U16",
@@ -50,12 +51,12 @@ static const char* PixelFormatToStringMap[] =
 
 static unsigned int PixelFormatToBytesPerPixelMap[] = 
 {
-    1, 2, 3, sizeof(float), sizeof(float) * 3, 2, 2, 2, sizeof(float)
+    1, 2, 3, 4, sizeof(float), sizeof(float) * 3, 2, 2, 2, sizeof(float)
 };
 
 static unsigned int PixelFormatToChannelCountMap[] = 
 {
-    1, 1, 3, 1, 3, 1, 1, 1, 1
+    1, 1, 3, 4, 1, 3, 1, 1, 1, 1
 };
 
 const char* drivers::camera::PixelFormatToString(drivers::camera::EPixelFormat v)

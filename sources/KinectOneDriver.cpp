@@ -47,9 +47,7 @@ struct drivers::camera::KinectOne::KOAPIPimpl
         rgb_height(1080), 
         depth_width(512), 
         depth_height(424), 
-        ir_width(512), 
-        ir_height(424), 
-        frame_types(libfreenect2::Frame::Color | libfreenect2::Frame::Depth | libfreenect2::Frame::Ir),
+        frame_types(libfreenect2::Frame::Color | libfreenect2::Frame::Depth),
         undistorted(512, 424, 4),
         registered(512, 424, 4),
         should_register(false)
@@ -59,12 +57,12 @@ struct drivers::camera::KinectOne::KOAPIPimpl
     
     std::size_t rgb_width, rgb_height;
     std::size_t depth_width, depth_height;
-    std::size_t ir_width, ir_height;
     
     libfreenect2::Freenect2 freenect2;
     std::unique_ptr<libfreenect2::Freenect2Device> dev;
     std::unique_ptr<libfreenect2::SyncMultiFrameListener> listener;
     std::unique_ptr<libfreenect2::Registration> registration;
+    std::unique_ptr<libfreenect2::PacketPipeline> pipeline;
     
     unsigned int frame_types;
     libfreenect2::Frame undistorted, registered;
@@ -89,7 +87,7 @@ struct drivers::camera::KinectOne::KOAPIPimpl
 
 struct FrameTuple
 {
-    FrameTuple() : count(3)  { }
+    FrameTuple() : count(2)  { }
     libfreenect2::FrameMap frames;
     std::atomic<unsigned int> count;
 };
@@ -126,10 +124,12 @@ void drivers::camera::KinectOne::image_release_nothing(void* img)
     
 }
 
-void drivers::camera::KinectOne::open(unsigned int idx, bool depth, bool rgb, bool registered, bool ir)
+void drivers::camera::KinectOne::open(unsigned int idx, bool depth, bool rgb, bool registered)
 {
     m_pimpl->setRegistrationMode(registered);
-    m_pimpl->dev = std::unique_ptr<libfreenect2::Freenect2Device>(m_pimpl->freenect2.openDefaultDevice()); // TODO FIXME
+    m_pimpl->pipeline = std::unique_ptr<libfreenect2::PacketPipeline>(new libfreenect2::OpenGLPacketPipeline());
+    m_pimpl->dev = std::unique_ptr<libfreenect2::Freenect2Device>(m_pimpl->freenect2.openDefaultDevice(m_pimpl->pipeline.get())); // TODO FIXME
+    //m_pimpl->dev = std::unique_ptr<libfreenect2::Freenect2Device>(m_pimpl->freenect2.openDefaultDevice()); // TODO FIXME
     if(m_pimpl->dev.get() != nullptr)
     {
         if(depth)
@@ -149,16 +149,7 @@ void drivers::camera::KinectOne::open(unsigned int idx, bool depth, bool rgb, bo
         {
             m_pimpl->frame_types &= ~libfreenect2::Frame::Color;
         }
-        
-        if(ir)
-        {
-            m_pimpl->frame_types |= libfreenect2::Frame::Ir;
-        }
-        else
-        {
-            m_pimpl->frame_types &= ~libfreenect2::Frame::Ir;
-        }
-        
+                
         m_pimpl->listener = std::unique_ptr<libfreenect2::SyncMultiFrameListener>(new libfreenect2::SyncMultiFrameListener(m_pimpl->frame_types));
         m_pimpl->dev->setColorFrameListener(m_pimpl->listener.get());
         m_pimpl->dev->setIrAndDepthFrameListener(m_pimpl->listener.get());
@@ -201,15 +192,11 @@ void drivers::camera::KinectOne::stop()
 
 std::size_t drivers::camera::KinectOne::getRGBWidth() const { return m_pimpl->rgb_width; }
 std::size_t drivers::camera::KinectOne::getRGBHeight() const { return m_pimpl->rgb_height; }
-drivers::camera::EPixelFormat drivers::camera::KinectOne::getRGBPixelFormat() const { return EPixelFormat::PIXEL_FORMAT_RGB8; }
+drivers::camera::EPixelFormat drivers::camera::KinectOne::getRGBPixelFormat() const { return EPixelFormat::PIXEL_FORMAT_RGBA8; }
 
 std::size_t drivers::camera::KinectOne::getDepthWidth() const { return m_pimpl->depth_width; }
 std::size_t drivers::camera::KinectOne::getDepthHeight() const { return m_pimpl->depth_height; }
 drivers::camera::EPixelFormat drivers::camera::KinectOne::getDepthPixelFormat() const { return EPixelFormat::PIXEL_FORMAT_DEPTH_F32_M; }
-
-std::size_t drivers::camera::KinectOne::getIRWidth() const { return m_pimpl->ir_width; }
-std::size_t drivers::camera::KinectOne::getIRHeight() const { return m_pimpl->ir_height; }
-drivers::camera::EPixelFormat drivers::camera::KinectOne::getIRPixelFormat() const { return EPixelFormat::PIXEL_FORMAT_MONO32F; }
 
 // DEPTH, RGB, Infrared
 bool drivers::camera::KinectOne::captureFrameImpl(FrameBuffer* cf1, FrameBuffer* cf2, FrameBuffer* cf3, FrameBuffer* cf4, int64_t timeout)
@@ -238,7 +225,6 @@ bool drivers::camera::KinectOne::captureFrameImpl(FrameBuffer* cf1, FrameBuffer*
     
     libfreenect2::Frame *rgb = ft->frames[libfreenect2::Frame::Color];
     libfreenect2::Frame *depth = ft->frames[libfreenect2::Frame::Depth];
-    libfreenect2::Frame *ir = ft->frames[libfreenect2::Frame::Ir];       
     
     if(!m_pimpl->should_register)
     {
@@ -247,15 +233,10 @@ bool drivers::camera::KinectOne::captureFrameImpl(FrameBuffer* cf1, FrameBuffer*
         cf1->setTimeStamp(depth->timestamp * 10 * 1000000);
         cf1->setPCTimeStamp(d.count());
         
-        cf2->create(ft, std::bind(&drivers::camera::KinectOne::image_release, this, std::placeholders::_1), rgb->data, rgb->width, rgb->height, EPixelFormat::PIXEL_FORMAT_RGB8);
+        cf2->create(ft, std::bind(&drivers::camera::KinectOne::image_release, this, std::placeholders::_1), rgb->data, rgb->width, rgb->height, EPixelFormat::PIXEL_FORMAT_RGBA8);
         cf2->setFrameCounter(rgb->sequence);
         cf2->setTimeStamp(rgb->timestamp * 10 * 1000000);
         cf2->setPCTimeStamp(d.count());
-        
-        cf3->create(ft, std::bind(&drivers::camera::KinectOne::image_release, this, std::placeholders::_1), ir->data, ir->width, ir->height, EPixelFormat::PIXEL_FORMAT_MONO32F);
-        cf3->setFrameCounter(ir->sequence);
-        cf3->setTimeStamp(ir->timestamp * 10 * 1000000);
-        cf3->setPCTimeStamp(d.count());
     }
     else
     {
@@ -263,16 +244,19 @@ bool drivers::camera::KinectOne::captureFrameImpl(FrameBuffer* cf1, FrameBuffer*
         
         cf1->create(&m_pimpl->undistorted, std::bind(&drivers::camera::KinectOne::image_release_nothing, this, std::placeholders::_1), 
                     m_pimpl->undistorted.data, m_pimpl->undistorted.width, m_pimpl->undistorted.height, EPixelFormat::PIXEL_FORMAT_DEPTH_F32_M);
+        std::cerr << "UD " << (uint64_t)m_pimpl->undistorted.data << " / " << m_pimpl->undistorted.width << " x " << m_pimpl->undistorted.height << " | " << m_pimpl->undistorted.bytes_per_pixel << " / " << m_pimpl->undistorted.format << std::endl;
         cf1->setFrameCounter(depth->sequence);
         cf1->setTimeStamp(depth->timestamp * 10 * 1000000);
         cf1->setPCTimeStamp(d.count());
         
         cf2->create(&m_pimpl->registered, std::bind(&drivers::camera::KinectOne::image_release_nothing, this, std::placeholders::_1), 
-                    m_pimpl->registered.data, m_pimpl->registered.width, m_pimpl->registered.height, EPixelFormat::PIXEL_FORMAT_RGB8);
+                    m_pimpl->registered.data, m_pimpl->registered.width, m_pimpl->registered.height, EPixelFormat::PIXEL_FORMAT_RGBA8);
+        std::cerr << "RG " << (uint64_t)m_pimpl->registered.data << " / " << m_pimpl->registered.width << " x " << m_pimpl->registered.height << " | " << m_pimpl->registered.bytes_per_pixel << " / " << m_pimpl->registered.format << std::endl;
         cf2->setFrameCounter(rgb->sequence);
         cf2->setTimeStamp(rgb->timestamp * 10 * 1000000);
         cf2->setPCTimeStamp(d.count());
         
+        m_pimpl->listener->release(ft->frames);
         delete ft;
     }
     
