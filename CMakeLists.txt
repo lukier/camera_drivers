@@ -98,20 +98,21 @@ find_package(OpenNI2 QUIET)
 find_package(LibRealSense QUIET)
 find_package(freenect2 QUIET)
 find_package(IDSuEye QUIET)
+find_package(V4L2 QUIET)
 
 # --------------------------------------------------------------------------------
 # Sources
 # --------------------------------------------------------------------------------
 set(HEADERS
-CameraDrivers.hpp
-FireWireDriver.hpp
-KinectOneDriver.hpp
-OpenNIDriver.hpp
-PointGreyDriver.hpp
-RealSenseDriver.hpp
-V4LDriver.hpp
-VRMagicDriver.hpp
-#IDSuEyeDriver.hpp
+include/CameraDrivers.hpp
+include/FireWireDriver.hpp
+include/KinectOneDriver.hpp
+include/OpenNIDriver.hpp
+include/PointGreyDriver.hpp
+include/RealSenseDriver.hpp
+include/V4LDriver.hpp
+include/VRMagicDriver.hpp
+include/IDSuEyeDriver.hpp
 )
 
 set(SOURCES
@@ -161,6 +162,12 @@ if(IDSUEYE_FOUND)
     #list(APPEND SOURCES sources/IDSuEyeDriver.cpp)
 endif()
 
+if(V4L2_FOUND)
+    message("FOUND: V4L2")
+    set(CAMERADRIVERS_SUPPORTS_V4L2 ON)
+    #list(APPEND SOURCES sources/V4LDriver.cpp)
+endif()
+
 # --------------------------------------------------------------------------------
 # Build library
 # --------------------------------------------------------------------------------
@@ -203,15 +210,13 @@ if(LIBREALSENSE_FOUND)
     target_include_directories(${PROJECT_NAME} PRIVATE ${LIBREALSENSE_INCLUDE_DIR})
     target_link_libraries(${PROJECT_NAME} PRIVATE ${LIBREALSENSE_LIBRARY})
 endif()
-if(freenect2_FOUND)
-    target_link_libraries(${PROJECT_NAME} PRIVATE ${freenect2_LIBRARIES})
-    target_include_directories(${PROJECT_NAME} PRIVATE ${LIBREALSENSE_INCLUDE_DIR})
-    target_link_libraries(${PROJECT_NAME} PRIVATE ${LIBREALSENSE_LIBRARY})
-endif()
 if(IDSUEYE_FOUND)
     target_link_libraries(${PROJECT_NAME} PRIVATE ${IDSUEYE_LIBRARY})
-    target_include_directories(${PROJECT_NAME} PRIVATE ${LIBREALSENSE_INCLUDE_DIR})
-    target_link_libraries(${PROJECT_NAME} PRIVATE ${LIBREALSENSE_LIBRARY})
+    target_include_directories(${PROJECT_NAME} PRIVATE ${IDSUEYE_INCLUDE_DIR})
+endif()
+if(V4L2_FOUND)
+    target_link_libraries(${PROJECT_NAME} PRIVATE ${V4L2_LIBRARIES})
+    target_include_directories(${PROJECT_NAME} PRIVATE ${V4L2_INCLUDE_DIRS})
 endif()
 
 # ---------------------------------------------

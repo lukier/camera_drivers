@@ -42,6 +42,7 @@
 #include <iomanip>
 #include <vector>
 #include <cmath>
+#include <cstdlib>
 #include <valarray>
 
 // testing framework & libraries
@@ -55,21 +56,129 @@
 #include <V4LDriver.hpp>
 #include <VRMagicDriver.hpp>
 
-class Test_CameraDrivers : public ::testing::Test
+class Test_FrameBuffer : public ::testing::Test
 {
 public:   
-    Test_CameraDrivers()
+    Test_FrameBuffer()
     {
         
     }
     
-    virtual ~Test_CameraDrivers()
+    virtual ~Test_FrameBuffer()
     {
         
     }
 };
 
-TEST_F(Test_CameraDrivers, Live) 
+struct SomeExternalBufferSource
 {
+    SomeExternalBufferSource(bool& f, const std::size_t bytes) : ptr(malloc(bytes)), flag(f)
+    {
+        flag = true;
+    }
     
+    ~SomeExternalBufferSource()
+    {
+        free(ptr);
+        flag = false;
+    }
+    
+    void* ptr;
+    bool& flag;
+};
+
+static void sebs_deleter(const void* ptr)
+{
+    delete static_cast<const SomeExternalBufferSource*>(ptr);
+}
+
+TEST_F(Test_FrameBuffer, TestHeapAllocation) 
+{
+    drivers::camera::FrameBuffer fb;
+    
+    EXPECT_FALSE(fb.isValid()) << "Should be invalid";
+    ASSERT_EQ(fb.getData(), nullptr) << "Should be null";
+    
+    fb.create(640, 480, drivers::camera::EPixelFormat::PIXEL_FORMAT_RGBA8);
+    
+    EXPECT_TRUE(fb.isValid()) << "Should be valid";
+    ASSERT_NE(fb.getData(), nullptr) << "Invalid pointer";
+    
+    ASSERT_EQ(fb.getWidth(), 640) << "Wrong width";
+    ASSERT_EQ(fb.getHeight(), 480) << "Wrong height";
+    ASSERT_EQ(fb.getDataSize(), 640*480*4) << "Wrong buffer size";
+    ASSERT_EQ(fb.getPixelFormat(), drivers::camera::EPixelFormat::PIXEL_FORMAT_RGBA8) << "Wrong pixel format";
+    
+    fb.release();
+    
+    EXPECT_FALSE(fb.isValid()) << "Should be invalid";
+    ASSERT_EQ(fb.getData(), nullptr) << "Should be null";
+}
+
+TEST_F(Test_FrameBuffer, TestZeroCopyMode) 
+{
+    drivers::camera::FrameBuffer fb;
+    
+    EXPECT_FALSE(fb.isValid()) << "Should be invalid";
+    ASSERT_EQ(fb.getData(), nullptr) << "Should be null";
+    
+    bool allocation_flag = false;
+    SomeExternalBufferSource* sebs = new SomeExternalBufferSource(allocation_flag,640*480*4);
+    EXPECT_TRUE(allocation_flag) << "Should be allocated";
+    
+    fb.create(sebs, std::bind(sebs_deleter, std::placeholders::_1), static_cast<uint8_t*>(sebs->ptr), 640, 480, drivers::camera::EPixelFormat::PIXEL_FORMAT_RGBA8);
+    
+    EXPECT_TRUE(fb.isValid()) << "Should be valid";
+    ASSERT_NE(fb.getData(), nullptr) << "Invalid pointer";
+    ASSERT_EQ(fb.getData(), sebs->ptr) << "Wrong memory"; // should use external memory
+    
+    ASSERT_EQ(fb.getWidth(), 640) << "Wrong width";
+    ASSERT_EQ(fb.getHeight(), 480) << "Wrong height";
+    ASSERT_EQ(fb.getDataSize(), 640*480*4) << "Wrong buffer size";
+    ASSERT_EQ(fb.getPixelFormat(), drivers::camera::EPixelFormat::PIXEL_FORMAT_RGBA8) << "Wrong pixel format";
+    
+    // let's move
+    drivers::camera::FrameBuffer fb2(std::move(fb));
+    EXPECT_TRUE(allocation_flag) << "Should be still allocated";
+    EXPECT_FALSE(fb.isValid()) << "Should be invalid";
+    ASSERT_EQ(fb.getData(), nullptr) << "Should be null";
+    
+    EXPECT_TRUE(fb2.isValid()) << "Should be valid";
+    ASSERT_NE(fb2.getData(), nullptr) << "Invalid pointer";
+    ASSERT_EQ(fb2.getData(), sebs->ptr) << "Wrong memory"; // should use external memory
+    
+    ASSERT_EQ(fb2.getWidth(), 640) << "Wrong width";
+    ASSERT_EQ(fb2.getHeight(), 480) << "Wrong height";
+    ASSERT_EQ(fb2.getDataSize(), 640*480*4) << "Wrong buffer size";
+    ASSERT_EQ(fb2.getPixelFormat(), drivers::camera::EPixelFormat::PIXEL_FORMAT_RGBA8) << "Wrong pixel format";
+    
+    // do a copy
+    drivers::camera::FrameBuffer fb3(fb2);
+    
+    EXPECT_TRUE(allocation_flag) << "Should be still allocated";
+    
+    EXPECT_TRUE(fb2.isValid()) << "Should be valid";
+    ASSERT_NE(fb2.getData(), nullptr) << "Invalid pointer";
+    ASSERT_EQ(fb2.getData(), sebs->ptr) << "Wrong memory"; // should use external memory
+    
+    ASSERT_EQ(fb2.getWidth(), 640) << "Wrong width";
+    ASSERT_EQ(fb2.getHeight(), 480) << "Wrong height";
+    ASSERT_EQ(fb2.getDataSize(), 640*480*4) << "Wrong buffer size";
+    ASSERT_EQ(fb2.getPixelFormat(), drivers::camera::EPixelFormat::PIXEL_FORMAT_RGBA8) << "Wrong pixel format";
+    
+    EXPECT_TRUE(fb3.isValid()) << "Should be valid";
+    ASSERT_NE(fb3.getData(), nullptr) << "Invalid pointer";
+    ASSERT_NE(fb3.getData(), sebs->ptr) << "Wrong memory"; // should use heap memory
+    
+    ASSERT_EQ(fb3.getWidth(), 640) << "Wrong width";
+    ASSERT_EQ(fb3.getHeight(), 480) << "Wrong height";
+    ASSERT_EQ(fb3.getDataSize(), 640*480*4) << "Wrong buffer size";
+    ASSERT_EQ(fb3.getPixelFormat(), drivers::camera::EPixelFormat::PIXEL_FORMAT_RGBA8) << "Wrong pixel format";
+    
+    fb2.release();
+    
+    EXPECT_FALSE(fb2.isValid()) << "Should be invalid";
+    ASSERT_EQ(fb2.getData(), nullptr) << "Should be null";
+    
+    EXPECT_FALSE(allocation_flag) << "Should be deallocated";
 }

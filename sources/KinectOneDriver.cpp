@@ -126,9 +126,14 @@ void drivers::camera::KinectOne::image_release_nothing(void* img)
 
 void drivers::camera::KinectOne::open(unsigned int idx, bool depth, bool rgb, bool registered)
 {
+    if(m_pimpl->freenect2.enumerateDevices() == 0)
+    {
+        throw std::runtime_error("No devices");
+    }
+    
     m_pimpl->setRegistrationMode(registered);
     m_pimpl->pipeline = std::unique_ptr<libfreenect2::PacketPipeline>(new libfreenect2::OpenGLPacketPipeline());
-    m_pimpl->dev = std::unique_ptr<libfreenect2::Freenect2Device>(m_pimpl->freenect2.openDefaultDevice(m_pimpl->pipeline.get())); // TODO FIXME
+    m_pimpl->dev = std::unique_ptr<libfreenect2::Freenect2Device>(m_pimpl->freenect2.openDevice(idx, m_pimpl->pipeline.get())); // TODO FIXME
     //m_pimpl->dev = std::unique_ptr<libfreenect2::Freenect2Device>(m_pimpl->freenect2.openDefaultDevice()); // TODO FIXME
     if(m_pimpl->dev.get() != nullptr)
     {

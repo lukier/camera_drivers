@@ -50,7 +50,6 @@
 
 namespace FlyCapture2 { class Error; class Image; }
 
-
 namespace drivers
 {
     

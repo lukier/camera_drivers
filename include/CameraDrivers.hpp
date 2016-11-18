@@ -50,8 +50,6 @@
 #include <cereal/cereal.hpp>
 #endif // CAMERA_DRIVERS_HAVE_CEREAL
 
-namespace FlyCapture2 { class Error; }
-
 namespace drivers
 {
     
@@ -207,7 +205,7 @@ public:
             memcpy(memaccess, other.memaccess, data_size);
         }
     }
-#if 0
+
     /**
      * Move constructor.
      */
@@ -238,7 +236,7 @@ public:
         other.width = other.height = other.stride = other.data_size = 0;
         bpp = PixelFormatToBytesPerPixel(pixfmt);
     }
-#endif
+
     /**
      * Create from VideoMode.
      */
@@ -310,7 +308,7 @@ public:
         
         return *this;
     }
-#if 0
+
     /**
      * Move operator.
      */
@@ -344,7 +342,7 @@ public:
         
         return *this;
     }
-#endif
+
     /**
      * Create on the heap from VideMode
      */
@@ -511,7 +509,7 @@ private:
         delete[] static_cast<uint8_t*>(ab);
     }
     
-    void delete_nothing(void* ab) { }
+    void delete_nothing(void*) {  }
     
     std::function<void (void*)> deleter;
     void* associated_buffer;
@@ -594,16 +592,16 @@ public:
         return isStartedImpl();
     }
     
-    virtual bool getFeaturePower(EFeature fidx) { return false; }
-    virtual void setFeaturePower(EFeature fidx, bool b) { }
-    virtual bool getFeatureAuto(EFeature fidx) { return false; }
-    virtual void setFeatureAuto(EFeature fidx, bool b) { }
-    virtual uint32_t getFeatureValue(EFeature fidx){ return 0; }
-    virtual float getFeatureValueAbs(EFeature fidx){ return 0.0f; }
-    virtual uint32_t getFeatureMin(EFeature fidx) { return 0; }
-    virtual uint32_t getFeatureMax(EFeature fidx) { return 0; }
-    virtual void setFeatureValue(EFeature fidx, uint32_t val) { }
-    virtual void setFeatureValueAbs(EFeature fidx, float val) { }
+    virtual bool getFeaturePower(EFeature) { return false; }
+    virtual void setFeaturePower(EFeature, bool) { }
+    virtual bool getFeatureAuto(EFeature) { return false; }
+    virtual void setFeatureAuto(EFeature, bool) { }
+    virtual uint32_t getFeatureValue(EFeature){ return 0; }
+    virtual float getFeatureValueAbs(EFeature){ return 0.0f; }
+    virtual uint32_t getFeatureMin(EFeature) { return 0; }
+    virtual uint32_t getFeatureMax(EFeature) { return 0; }
+    virtual void setFeatureValue(EFeature, uint32_t) { }
+    virtual void setFeatureValueAbs(EFeature, float) { }
     virtual void setFeature(EFeature fidx, bool power, bool automatic, uint32_t val) 
     {
         setFeaturePower(fidx, power);

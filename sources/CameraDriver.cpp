@@ -302,7 +302,7 @@ void drivers::camera::FrameBuffer::create(std::size_t awidth, std::size_t aheigh
 
 void drivers::camera::FrameBuffer::create(uint8_t* abuffer, std::size_t awidth, std::size_t aheight, drivers::camera::EPixelFormat apixfmt, std::size_t astride)
 {
-    // release what we might have now
+    // release what we might have now, a must for external buffers
     release();
     
     deleter = std::bind(&FrameBuffer::delete_nothing, this, std::placeholders::_1);
@@ -318,7 +318,7 @@ void drivers::camera::FrameBuffer::create(uint8_t* abuffer, std::size_t awidth, 
 
 void drivers::camera::FrameBuffer::create(void* extobject, std::function<void (void*)> adeleter, uint8_t* abuffer, std::size_t awidth, std::size_t aheight, drivers::camera::EPixelFormat apixfmt, std::size_t astride)
 {
-    // release what we might have now
+    // release what we might have now, a must for external buffers
     release();
     
     associated_buffer = extobject;
