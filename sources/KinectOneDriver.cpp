@@ -47,6 +47,7 @@ struct drivers::camera::KinectOne::KOAPIPimpl
         rgb_height(1080), 
         depth_width(512), 
         depth_height(424), 
+        dev(nullptr), listener(nullptr), registration(nullptr), pipeline(nullptr),
         frame_types(libfreenect2::Frame::Color | libfreenect2::Frame::Depth),
         undistorted(512, 424, 4),
         registered(512, 424, 4),
@@ -189,10 +190,12 @@ void drivers::camera::KinectOne::start()
     {
         m_pimpl->registration = std::unique_ptr<libfreenect2::Registration>(new libfreenect2::Registration(m_pimpl->dev->getIrCameraParams(), m_pimpl->dev->getColorCameraParams()));
     }
+    is_running = true;
 }
 
 void drivers::camera::KinectOne::stop()
 {
+    is_running = false;
     m_pimpl->dev->stop();
     if(m_pimpl->should_register)
     {
