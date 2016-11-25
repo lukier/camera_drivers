@@ -692,7 +692,7 @@ bool drivers::camera::OpenNI::captureFrameImpl(FrameBuffer* cf1, FrameBuffer* cf
         }
     }
     
-    openni::Status rc = openni::OpenNI::waitForAnyStream(m_pimpl->streams, waitStreamCount, &changedIndex, timeout / 1000000);
+    openni::Status rc = openni::OpenNI::waitForAnyStream(m_pimpl->streams, waitStreamCount, &changedIndex, timeout > 0 ? timeout / 1000000 : openni::TIMEOUT_FOREVER);
     if (rc != openni::STATUS_OK) 
     { 
         return false; 
