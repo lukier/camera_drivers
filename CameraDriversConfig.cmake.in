@@ -3,10 +3,11 @@ set(CameraDrivers_FOUND TRUE)
 include(CMakeFindDependencyMacro)
 
 if(@cereal_FOUND@)
-	find_dependency(cereal QUIET)
+    find_dependency(cereal QUIET)
 endif()
+
 if(@CameraModels_FOUND@)
-	find_dependency(CameraModels QUIET)
+    find_dependency(CameraModels QUIET)
 endif()
 
 include("${CMAKE_CURRENT_LIST_DIR}/CameraDriversTargets.cmake")
