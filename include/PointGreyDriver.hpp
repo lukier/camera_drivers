@@ -86,7 +86,7 @@ public:
     void close();
     
     void start();
-    void start(FrameCallbackT c);
+    void start(FrameCallback c);
     void stop();
     
     void setModeAndFramerate(EVideoMode vmode, EFrameRate framerate);
@@ -121,7 +121,7 @@ private:
     EPixelFormat m_pixfmt;
     int m_camid;
     bool is_running;
-    FrameCallbackT cb;
+    FrameCallback cb;
 };
 
 }

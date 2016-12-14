@@ -53,7 +53,7 @@ static inline bool getRSOption(drivers::camera::EFeature fidx, rs::option& opt, 
     switch(fidx)
     {
         case drivers::camera::EFeature::BRIGHTNESS: opt = rs::option::color_brightness; return true;
-        case drivers::camera::EFeature::AUTO_EXPOSURE: opt = rs::option::color_enable_auto_exposure; return true;
+        case drivers::camera::EFeature::EXPOSURE: opt = rs::option::color_enable_auto_exposure; return true;
         case drivers::camera::EFeature::SHARPNESS: opt = rs::option::color_sharpness; return true;
         case drivers::camera::EFeature::WHITE_BALANCE: if(!isauto) { opt = rs::option::color_white_balance; } else { opt = rs::option::color_white_balance; } return true;
         case drivers::camera::EFeature::HUE: opt = rs::option::color_hue; return true;
@@ -236,7 +236,27 @@ void drivers::camera::RealSense::setRGBMode(std::size_t w, std::size_t h, unsign
         m_pimpl->default_color_stream = rs::stream::color;
     }
     
-    m_pimpl->device->enable_stream(rs::stream::color, w, h, rs::format::rgb8, fps);
+    rs::format rsfmt = rs::format::rgb8;
+    
+    switch(pixfmt)
+    {
+        case EPixelFormat::PIXEL_FORMAT_MONO8:
+            rsfmt = rs::format::y8;
+            break;
+        case EPixelFormat::PIXEL_FORMAT_MONO16:
+            rsfmt = rs::format::y16;
+            break;
+        case EPixelFormat::PIXEL_FORMAT_RGB8:
+            rsfmt = rs::format::rgb8;
+            break;
+        case EPixelFormat::PIXEL_FORMAT_BGR8:
+            rsfmt = rs::format::bgr8;
+            break;
+        default:
+            throw std::runtime_error("Unsupported pixel format");
+    }
+    
+    m_pimpl->device->enable_stream(rs::stream::color, w, h, rsfmt, fps);
     
     m_pimpl->color_valid = true;
 }

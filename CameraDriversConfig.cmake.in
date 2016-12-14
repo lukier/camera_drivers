@@ -1,5 +1,3 @@
-set(CameraDrivers_FOUND TRUE)
-
 include(CMakeFindDependencyMacro)
 
 if(@cereal_FOUND@)

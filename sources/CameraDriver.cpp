@@ -35,35 +35,108 @@
 
 #include <CameraDrivers.hpp>
 
-static const char* PixelFormatToStringMap[] = 
+struct PixelFormatInfo
 {
-    "PIXEL_FORMAT_MONO8",
-    "PIXEL_FORMAT_MONO16",
-    "PIXEL_FORMAT_RGB8",
-    "PIXEL_FORMAT_RGBA8",
-    "PIXEL_FORMAT_MONO32F",
-    "PIXEL_FORMAT_RGB32F",
-    "PIXEL_FORMAT_DEPTH_U16",
-    "PIXEL_FORMAT_DEPTH_U16_1MM",
-    "PIXEL_FORMAT_DEPTH_U16_100UM",
-    "PIXEL_FORMAT_DEPTH_F32_M"
+    const char*     Name;
+    std::size_t     ChannelCount;
+    std::size_t     BytesPerChannel;
 };
 
-static unsigned int PixelFormatToBytesPerPixelMap[] = 
+static const PixelFormatInfo PixelFormatInfoMap[] =
 {
-    1, 2, 3, 4, sizeof(float), sizeof(float) * 3, 2, 2, 2, sizeof(float)
+    {"PIXEL_FORMAT_MONO8", 1, sizeof(uint8_t)},
+    {"PIXEL_FORMAT_MONO16", 1, sizeof(uint16_t)},
+    {"PIXEL_FORMAT_RGB8", 3, sizeof(uint8_t)},
+    {"PIXEL_FORMAT_BGR8", 3, sizeof(uint8_t)},
+    {"PIXEL_FORMAT_RGBA8", 4, sizeof(uint8_t)},
+    {"PIXEL_FORMAT_BGRA8", 4, sizeof(uint8_t)},
+    {"PIXEL_FORMAT_MONO32F", 1, sizeof(float)},
+    {"PIXEL_FORMAT_RGB32F", 3, sizeof(float)},
+    {"PIXEL_FORMAT_DEPTH_U16", 1, sizeof(uint16_t)},
+    {"PIXEL_FORMAT_DEPTH_U16_1MM", 1, sizeof(uint8_t)},
+    {"PIXEL_FORMAT_DEPTH_U16_100UM", 1, sizeof(uint8_t)},
+    {"PIXEL_FORMAT_DEPTH_F32_M", 1, sizeof(float)},
 };
 
-static unsigned int PixelFormatToChannelCountMap[] = 
+struct VideoModeInfo
 {
-    1, 1, 3, 4, 1, 3, 1, 1, 1, 1
+    const char*                     Name;
+    std::size_t                     Width;
+    std::size_t                     Height;
+    drivers::camera::EPixelFormat   PixelFormat;
+};
+
+static const VideoModeInfo VideoModeInfoMap[] =
+{
+    {"VIDEOMODE_640x480RGB", 640, 480, drivers::camera::EPixelFormat::PIXEL_FORMAT_RGB8 },
+    {"VIDEOMODE_640x480Y8", 640, 480, drivers::camera::EPixelFormat::PIXEL_FORMAT_MONO8 },
+    {"VIDEOMODE_640x480Y16", 640, 480, drivers::camera::EPixelFormat::PIXEL_FORMAT_MONO16 },
+    {"VIDEOMODE_800x600RGB", 800, 600, drivers::camera::EPixelFormat::PIXEL_FORMAT_RGB8 },
+    {"VIDEOMODE_800x600Y8", 800, 600, drivers::camera::EPixelFormat::PIXEL_FORMAT_MONO8 },
+    {"VIDEOMODE_800x600Y16", 800, 600, drivers::camera::EPixelFormat::PIXEL_FORMAT_MONO16 },
+    {"VIDEOMODE_1024x768RGB", 1024, 768, drivers::camera::EPixelFormat::PIXEL_FORMAT_RGB8 },
+    {"VIDEOMODE_1024x768Y8", 1024, 768, drivers::camera::EPixelFormat::PIXEL_FORMAT_MONO8 },
+    {"VIDEOMODE_1024x768Y16", 1024, 768, drivers::camera::EPixelFormat::PIXEL_FORMAT_MONO16 },
+    {"VIDEOMODE_1280x960RGB", 1280, 960, drivers::camera::EPixelFormat::PIXEL_FORMAT_RGB8 },
+    {"VIDEOMODE_1280x960Y8", 1280, 960, drivers::camera::EPixelFormat::PIXEL_FORMAT_MONO8 },
+    {"VIDEOMODE_1280x960Y16", 1280, 960, drivers::camera::EPixelFormat::PIXEL_FORMAT_MONO16 },
+    {"VIDEOMODE_1600x1200RGB", 1600, 1200, drivers::camera::EPixelFormat::PIXEL_FORMAT_RGB8 },
+    {"VIDEOMODE_1600x1200Y8", 1600, 1200, drivers::camera::EPixelFormat::PIXEL_FORMAT_MONO8 },
+    {"VIDEOMODE_1600x1200Y16", 1600, 1200, drivers::camera::EPixelFormat::PIXEL_FORMAT_MONO16 },
+    {"VIDEOMODE_CUSTOM", 0, 0, drivers::camera::EPixelFormat::PIXEL_FORMAT_UNSUPPORTED },
+};
+
+struct FrameRateInfo
+{
+    const char* Name;
+    std::size_t FPS;
+};
+
+static const FrameRateInfo FrameRateInfoMap[] =
+{
+    {"FRAMERATE_15", 15},
+    {"FRAMERATE_30", 30},
+    {"FRAMERATE_60", 60},
+    {"FRAMERATE_120", 120},
+    {"FRAMERATE_240", 240},
+    {"FRAMERATE_CUSTOM", 0},
+};
+
+struct FeatureInfo
+{
+    const char* Name;
+    bool        CanAuto;
+    bool        CanAbsolute;
+};
+
+static const FeatureInfo FeatureInfoMap[] =
+{
+    {"BRIGHTNESS", false, true},
+    {"EXPOSURE", true, true},
+    {"SHARPNESS", false, true},
+    {"WHITE_BALANCE", true, true},
+    {"HUE", false, true},
+    {"SATURATION", false, true},
+    {"GAMMA", false, true},
+    {"IRIS", false, true},
+    {"FOCUS", false, true},
+    {"ZOOM", false, true},
+    {"PAN", false, true},
+    {"TILT", false, true},
+    {"SHUTTER", false, true},
+    {"GAIN", true, true},
+    {"TRIGGER_MODE", false, true},
+    {"TRIGGER_DELAY", false, true},
+    {"FRAME_RATE", true, true},
+    {"TEMPERATURE", false, true},
 };
 
 const char* drivers::camera::PixelFormatToString(drivers::camera::EPixelFormat v)
 {
-    if((int)v <= (int)drivers::camera::EPixelFormat::PIXEL_FORMAT_DEPTH_F32_M)
+    if((int)v < (int)drivers::camera::EPixelFormat::PIXEL_FORMAT_UNSUPPORTED)
     {
-        return PixelFormatToStringMap[(int)v];
+        const PixelFormatInfo& pfi = PixelFormatInfoMap[(int)v];
+        return pfi.Name;
     }
     else
     {
@@ -71,11 +144,12 @@ const char* drivers::camera::PixelFormatToString(drivers::camera::EPixelFormat v
     }
 }
 
-unsigned int drivers::camera::PixelFormatToBytesPerPixel(drivers::camera::EPixelFormat v)
+std::size_t drivers::camera::PixelFormatToBytesPerPixel(drivers::camera::EPixelFormat v)
 {
-    if((int)v <= (int)drivers::camera::EPixelFormat::PIXEL_FORMAT_DEPTH_F32_M)
+    if((int)v < (int)drivers::camera::EPixelFormat::PIXEL_FORMAT_UNSUPPORTED)
     {
-        return PixelFormatToBytesPerPixelMap[(int)v];
+        const PixelFormatInfo& pfi = PixelFormatInfoMap[(int)v];
+        return pfi.ChannelCount * pfi.BytesPerChannel;
     }
     else
     {
@@ -83,79 +157,25 @@ unsigned int drivers::camera::PixelFormatToBytesPerPixel(drivers::camera::EPixel
     }
 }
 
-unsigned int drivers::camera::PixelFormatToChannelCount(drivers::camera::EPixelFormat v)
+std::size_t drivers::camera::PixelFormatToChannelCount(drivers::camera::EPixelFormat v)
 {
-    if((int)v <= (int)drivers::camera::EPixelFormat::PIXEL_FORMAT_DEPTH_F32_M)
+    if((int)v < (int)drivers::camera::EPixelFormat::PIXEL_FORMAT_UNSUPPORTED)
     {
-        return PixelFormatToChannelCountMap[(int)v];
+        const PixelFormatInfo& pfi = PixelFormatInfoMap[(int)v];
+        return pfi.ChannelCount;
     }
     else
     {
         return 0;
     }
 }
-
-static const char* VideoModeToStringMap[] = 
-{
-    "VIDEOMODE_640x480RGB",
-    "VIDEOMODE_640x480Y8",
-    "VIDEOMODE_640x480Y16",
-    "VIDEOMODE_800x600RGB",
-    "VIDEOMODE_800x600Y8",
-    "VIDEOMODE_800x600Y16",
-    "VIDEOMODE_1024x768RGB",
-    "VIDEOMODE_1024x768Y8",
-    "VIDEOMODE_1024x768Y16",
-    "VIDEOMODE_1280x960RGB",
-    "VIDEOMODE_1280x960Y8",
-    "VIDEOMODE_1280x960Y16",
-    "VIDEOMODE_1600x1200RGB",
-    "VIDEOMODE_1600x1200Y8",
-    "VIDEOMODE_1600x1200Y16",
-    "VIDEOMODE_CUSTOM"
-};
-
-static constexpr std::size_t VideoModeToWidthMap[] = 
-{
-    640, 640, 640,
-    800, 800, 800,
-    1024, 1024, 1024,
-    1280, 1280, 1280,
-    1600, 1600, 1600
-};
-
-static constexpr std::size_t VideoModeToHeightMap[] = 
-{
-    480, 480, 480,
-    600, 600, 600,
-    768, 768, 768,
-    960, 960, 960,
-    1200, 1200, 1200
-};
-
-static constexpr unsigned int VideoModeToChannelsMap[] = 
-{
-    3, 1, 1,
-    3, 1, 1,
-    3, 1, 1,
-    3, 1, 1,
-    3, 1, 1
-};
-
-static constexpr drivers::camera::EPixelFormat VideoModeToPixelFormatMap[] = 
-{
-    drivers::camera::EPixelFormat::PIXEL_FORMAT_RGB8, drivers::camera::EPixelFormat::PIXEL_FORMAT_MONO8, drivers::camera::EPixelFormat::PIXEL_FORMAT_MONO16,
-    drivers::camera::EPixelFormat::PIXEL_FORMAT_RGB8, drivers::camera::EPixelFormat::PIXEL_FORMAT_MONO8, drivers::camera::EPixelFormat::PIXEL_FORMAT_MONO16,
-    drivers::camera::EPixelFormat::PIXEL_FORMAT_RGB8, drivers::camera::EPixelFormat::PIXEL_FORMAT_MONO8, drivers::camera::EPixelFormat::PIXEL_FORMAT_MONO16,
-    drivers::camera::EPixelFormat::PIXEL_FORMAT_RGB8, drivers::camera::EPixelFormat::PIXEL_FORMAT_MONO8, drivers::camera::EPixelFormat::PIXEL_FORMAT_MONO16,
-    drivers::camera::EPixelFormat::PIXEL_FORMAT_RGB8, drivers::camera::EPixelFormat::PIXEL_FORMAT_MONO8, drivers::camera::EPixelFormat::PIXEL_FORMAT_MONO16
-};
 
 const char* drivers::camera::VideoModeToString(drivers::camera::EVideoMode v)
 {
-    if((int)v <= (int)drivers::camera::EVideoMode::VIDEOMODE_CUSTOM)
+    if((int)v < (int)drivers::camera::EVideoMode::VIDEOMODE_UNSUPPORTED)
     {
-        return VideoModeToStringMap[(int)v];
+        const VideoModeInfo& vmi = VideoModeInfoMap[(int)v];
+        return vmi.Name;
     }
     else
     {
@@ -165,9 +185,10 @@ const char* drivers::camera::VideoModeToString(drivers::camera::EVideoMode v)
 
 std::size_t drivers::camera::VideoModeToWidth(drivers::camera::EVideoMode v)
 {
-    if((int)v <= (int)drivers::camera::EVideoMode::VIDEOMODE_1600x1200Y16)
+    if((int)v < (int)drivers::camera::EVideoMode::VIDEOMODE_UNSUPPORTED)
     {
-        return VideoModeToWidthMap[(int)v];
+        const VideoModeInfo& vmi = VideoModeInfoMap[(int)v];
+        return vmi.Width;
     }
     else 
     { 
@@ -177,9 +198,10 @@ std::size_t drivers::camera::VideoModeToWidth(drivers::camera::EVideoMode v)
 
 std::size_t drivers::camera::VideoModeToHeight(drivers::camera::EVideoMode v)
 {
-    if((int)v <= (int)drivers::camera::EVideoMode::VIDEOMODE_1600x1200Y16)
+    if((int)v < (int)drivers::camera::EVideoMode::VIDEOMODE_UNSUPPORTED)
     {
-        return VideoModeToHeightMap[(int)v];
+        const VideoModeInfo& vmi = VideoModeInfoMap[(int)v];
+        return vmi.Height;
     }
     else
     {
@@ -187,16 +209,12 @@ std::size_t drivers::camera::VideoModeToHeight(drivers::camera::EVideoMode v)
     }
 }
 
-unsigned int drivers::camera::VideoModeToChannels(drivers::camera::EVideoMode v)
-{
-    return drivers::camera::PixelFormatToChannelCount(drivers::camera::VideoModeToPixelFormat(v));
-}
-
 drivers::camera::EPixelFormat drivers::camera::VideoModeToPixelFormat(drivers::camera::EVideoMode v)
 {
-    if((int)v <= (int)drivers::camera::EVideoMode::VIDEOMODE_1600x1200Y16)
+    if((int)v < (int)drivers::camera::EVideoMode::VIDEOMODE_UNSUPPORTED)
     {
-        return VideoModeToPixelFormatMap[(int)v];
+        const VideoModeInfo& vmi = VideoModeInfoMap[(int)v];
+        return vmi.PixelFormat;
     }
     else 
     { 
@@ -204,26 +222,17 @@ drivers::camera::EPixelFormat drivers::camera::VideoModeToPixelFormat(drivers::c
     }
 }
 
-static const char* FrameRateToStringMap[] = 
+std::size_t drivers::camera::VideoModeToChannels(drivers::camera::EVideoMode v)
 {
-    "FRAMERATE_15",
-    "FRAMERATE_30",
-    "FRAMERATE_60",
-    "FRAMERATE_120",
-    "FRAMERATE_240",
-    "FRAMERATE_CUSTOM"
-};
-
-static unsigned int FrameRateToFPSMap[] = 
-{
-    15, 30, 60, 120, 240
-};
+    return drivers::camera::PixelFormatToChannelCount(drivers::camera::VideoModeToPixelFormat(v));
+}
 
 const char* drivers::camera::FrameRateToString(drivers::camera::EFrameRate fr)
 {
-    if((int)fr <= (int)drivers::camera::EFrameRate::FRAMERATE_CUSTOM)
+    if((int)fr < (int)drivers::camera::EFrameRate::FRAMERATE_UNSUPPORTED)
     {
-        return FrameRateToStringMap[(int)fr];
+        const FrameRateInfo& fri = FrameRateInfoMap[(int)fr];
+        return fri.Name;
     }
     else
     {
@@ -231,11 +240,12 @@ const char* drivers::camera::FrameRateToString(drivers::camera::EFrameRate fr)
     }
 }
 
-unsigned int drivers::camera::FrameRateToFPS(drivers::camera::EFrameRate fr)
+std::size_t drivers::camera::FrameRateToFPS(drivers::camera::EFrameRate fr)
 {
-    if((int)fr <= (int)drivers::camera::EFrameRate::FRAMERATE_240)
+    if((int)fr < (int)drivers::camera::EFrameRate::FRAMERATE_UNSUPPORTED)
     {
-        return FrameRateToFPSMap[(int)fr];
+        const FrameRateInfo& fri = FrameRateInfoMap[(int)fr];
+        return fri.FPS;
     }
     else 
     { 
@@ -243,33 +253,12 @@ unsigned int drivers::camera::FrameRateToFPS(drivers::camera::EFrameRate fr)
     }
 }
 
-static const char* FeatureToStringMap[] = 
-{
-    "BRIGHTNESS",
-    "AUTO_EXPOSURE",
-    "SHARPNESS",
-    "WHITE_BALANCE",
-    "HUE",
-    "SATURATION",
-    "GAMMA",
-    "IRIS",
-    "FOCUS",
-    "ZOOM",
-    "PAN",
-    "TILT",
-    "SHUTTER",
-    "GAIN",
-    "TRIGGER_MODE",
-    "TRIGGER_DELAY",
-    "FRAME_RATE",
-    "TEMPERATURE",
-};
-
 const char* drivers::camera::FeatureToString(drivers::camera::EFeature ef)
 {
-    if((int)ef <= (int)drivers::camera::EFeature::TEMPERATURE)
+    if((int)ef < (int)drivers::camera::EFeature::UNSUPPORTED)
     {
-        return FeatureToStringMap[(int)ef];
+        const FeatureInfo& fi = FeatureInfoMap[(int)ef];
+        return fi.Name;
     }
     else
     {
@@ -279,7 +268,8 @@ const char* drivers::camera::FeatureToString(drivers::camera::EFeature ef)
 
 void drivers::camera::FrameBuffer::create(drivers::camera::EVideoMode vm)
 {
-    create(VideoModeToWidthMap[(int)vm], VideoModeToHeightMap[(int)vm], VideoModeToPixelFormatMap[(int)vm], VideoModeToChannelsMap[(int)vm]);
+    const VideoModeInfo& vmi = VideoModeInfoMap[(int)vm];
+    create(vmi.Width, vmi.Height, vmi.PixelFormat, PixelFormatToChannelCount(vmi.PixelFormat));
 }
 
 void drivers::camera::FrameBuffer::create(std::size_t awidth, std::size_t aheight, drivers::camera::EPixelFormat apixfmt, std::size_t astride)
@@ -288,7 +278,7 @@ void drivers::camera::FrameBuffer::create(std::size_t awidth, std::size_t aheigh
     height = aheight;
     pixfmt = apixfmt;
     bpp = PixelFormatToBytesPerPixel(pixfmt);
-    if(astride == 0) { stride = width * PixelFormatToBytesPerPixelMap[(int)pixfmt]; } else { stride = astride; }
+    if(astride == 0) { stride = width * PixelFormatToBytesPerPixel(pixfmt); } else { stride = astride; }
     unsigned int new_data_size = stride * height;
     if(new_data_size != data_size) // only reallocate when necessary
     {
@@ -312,7 +302,7 @@ void drivers::camera::FrameBuffer::create(uint8_t* abuffer, std::size_t awidth, 
     height = aheight;
     pixfmt = apixfmt;
     bpp = PixelFormatToBytesPerPixel(pixfmt);
-    if(astride == 0) { stride = width * PixelFormatToBytesPerPixelMap[(int)pixfmt]; } else { stride = astride; }
+    if(astride == 0) { stride = width * PixelFormatToBytesPerPixel(pixfmt); } else { stride = astride; }
     data_size = stride * height;
 }
 
@@ -328,6 +318,6 @@ void drivers::camera::FrameBuffer::create(void* extobject, std::function<void (v
     height = aheight;
     pixfmt = apixfmt;
     bpp = PixelFormatToBytesPerPixel(pixfmt);
-    if(astride == 0) { stride = width * PixelFormatToBytesPerPixelMap[(int)pixfmt]; } else { stride = astride; }
+    if(astride == 0) { stride = width * PixelFormatToBytesPerPixel(pixfmt); } else { stride = astride; }
     data_size = stride * height;
 }

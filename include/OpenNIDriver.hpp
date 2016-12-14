@@ -139,11 +139,11 @@ public:
     std::size_t getIRHeight() const;
     EPixelFormat getIRPixelFormat() const;
     
-    void setDepthCallback(FrameCallbackT c);
+    void setDepthCallback(FrameCallback c);
     void unsetDepthCallback();
-    void setRGBCallback(FrameCallbackT c);
+    void setRGBCallback(FrameCallback c);
     void unsetRGBCallback();
-    void setIRCallback(FrameCallbackT c);
+    void setIRCallback(FrameCallback c);
     void unsetIRCallback();
     
     void setSynchronization(bool b);

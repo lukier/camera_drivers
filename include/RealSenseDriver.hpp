@@ -106,6 +106,19 @@ public:
     void setRGBMode(std::size_t w, std::size_t h, unsigned int fps, EPixelFormat pixfmt, bool rectified = false, bool aligned_to_depth = false);
     void setIR1Mode(std::size_t w, std::size_t h, unsigned int fps);
     void setIR2Mode(std::size_t w, std::size_t h, unsigned int fps);
+    
+    void setDepthCallback(FrameCallback c);
+    void unsetDepthCallback();
+    void setRGBCallback(FrameCallback c);
+    void unsetRGBCallback();
+    void setIR1Callback(FrameCallback c);
+    void unsetIR1Callback();
+    void setIR2Callback(FrameCallback c);
+    void unsetIR2Callback();
+    void setMotionCallback(MotionCallback c);
+    void unsetMotionCallback();
+    void setEventCallback(EventCallback c);
+    void unsetEventCallback();
 
     std::size_t getRGBWidth() const;
     std::size_t getRGBHeight() const;

@@ -42,6 +42,7 @@
 #pragma GCC diagnostic ignored "-Wextra"
 #pragma GCC diagnostic ignored "-pedantic"
 #pragma GCC diagnostic ignored "-Wignored-qualifiers"
+#pragma GCC diagnostic ignored "-Wunknown-pragmas"
 #include <FlyCapture2.h>
 #include <FlyCapture2GUI.h>
 #pragma GCC diagnostic pop
@@ -52,54 +53,69 @@
 // Enum mappers
 // --------------------------------------------------------------------------
 
-static constexpr FlyCapture2::VideoMode RPCVideoModeToFlyCapture[] = {
-    /* VIDEOMODE_640x480RGB     */  FlyCapture2::VIDEOMODE_640x480RGB,  
-    /* VIDEOMODE_640x480Y8      */  FlyCapture2::VIDEOMODE_640x480Y8,
-    /* VIDEOMODE_640x480Y16     */  FlyCapture2::VIDEOMODE_640x480Y16,
-    /* VIDEOMODE_800x600RGB     */  FlyCapture2::VIDEOMODE_800x600RGB,
-    /* VIDEOMODE_800x600Y8      */  FlyCapture2::VIDEOMODE_800x600Y8,
-    /* VIDEOMODE_800x600Y16     */  FlyCapture2::VIDEOMODE_800x600Y16,
-    /* VIDEOMODE_1024x768RGB    */  FlyCapture2::VIDEOMODE_1024x768RGB,
-    /* VIDEOMODE_1024x768Y8     */  FlyCapture2::VIDEOMODE_1024x768Y8,
-    /* VIDEOMODE_1024x768Y16    */  FlyCapture2::VIDEOMODE_1024x768Y16,
-    /* VIDEOMODE_1280x960RGB    */  FlyCapture2::VIDEOMODE_1280x960RGB,
-    /* VIDEOMODE_1280x960Y8     */  FlyCapture2::VIDEOMODE_1280x960Y8,
-    /* VIDEOMODE_1280x960Y16    */  FlyCapture2::VIDEOMODE_1280x960Y16,
-    /* VIDEOMODE_1600x1200RGB   */  FlyCapture2::VIDEOMODE_1600x1200RGB,
-    /* VIDEOMODE_1600x1200Y8    */  FlyCapture2::VIDEOMODE_1600x1200Y8,
-    /* VIDEOMODE_1600x1200Y16   */  FlyCapture2::VIDEOMODE_1600x1200Y16,
-    /* VIDEOMODE_CUSTOM         */  FlyCapture2::VIDEOMODE_FORMAT7
-};
+static inline FlyCapture2::VideoMode VideoModeToFlyCapture(drivers::camera::EVideoMode v)
+{
+    switch(v)
+    {
+        case drivers::camera::EVideoMode::VIDEOMODE_640x480RGB   : return FlyCapture2::VIDEOMODE_640x480RGB;
+        case drivers::camera::EVideoMode::VIDEOMODE_640x480Y8    : return FlyCapture2::VIDEOMODE_640x480Y8;
+        case drivers::camera::EVideoMode::VIDEOMODE_640x480Y16   : return FlyCapture2::VIDEOMODE_640x480Y16;
+        case drivers::camera::EVideoMode::VIDEOMODE_800x600RGB   : return FlyCapture2::VIDEOMODE_800x600RGB;
+        case drivers::camera::EVideoMode::VIDEOMODE_800x600Y8    : return FlyCapture2::VIDEOMODE_800x600Y8;
+        case drivers::camera::EVideoMode::VIDEOMODE_800x600Y16   : return FlyCapture2::VIDEOMODE_800x600Y16;
+        case drivers::camera::EVideoMode::VIDEOMODE_1024x768RGB  : return FlyCapture2::VIDEOMODE_1024x768RGB;
+        case drivers::camera::EVideoMode::VIDEOMODE_1024x768Y8   : return FlyCapture2::VIDEOMODE_1024x768Y8;
+        case drivers::camera::EVideoMode::VIDEOMODE_1024x768Y16  : return FlyCapture2::VIDEOMODE_1024x768Y16;
+        case drivers::camera::EVideoMode::VIDEOMODE_1280x960RGB  : return FlyCapture2::VIDEOMODE_1280x960RGB;
+        case drivers::camera::EVideoMode::VIDEOMODE_1280x960Y8   : return FlyCapture2::VIDEOMODE_1280x960Y8;
+        case drivers::camera::EVideoMode::VIDEOMODE_1280x960Y16  : return FlyCapture2::VIDEOMODE_1280x960Y16;
+        case drivers::camera::EVideoMode::VIDEOMODE_1600x1200RGB : return FlyCapture2::VIDEOMODE_1600x1200RGB;
+        case drivers::camera::EVideoMode::VIDEOMODE_1600x1200Y8  : return FlyCapture2::VIDEOMODE_1600x1200Y8;
+        case drivers::camera::EVideoMode::VIDEOMODE_1600x1200Y16 : return FlyCapture2::VIDEOMODE_1600x1200Y16;
+        case drivers::camera::EVideoMode::VIDEOMODE_CUSTOM       : return FlyCapture2::VIDEOMODE_FORMAT7;
+        default: return FlyCapture2::NUM_VIDEOMODES;
+    }
+}
 
-static constexpr FlyCapture2::FrameRate RPCFrameRateToFlyCapture[] = {
-    /* FRAMERATE_15     */  FlyCapture2::FRAMERATE_15,
-    /* FRAMERATE_30     */  FlyCapture2::FRAMERATE_30,
-    /* FRAMERATE_60     */  FlyCapture2::FRAMERATE_60,
-    /* FRAMERATE_120    */  FlyCapture2::FRAMERATE_120,
-    /* FRAMERATE_240    */  FlyCapture2::FRAMERATE_240,
-    /* FRAMERATE_CUSTOM */  FlyCapture2::FRAMERATE_FORMAT7
-};
+static inline FlyCapture2::FrameRate FrameRateToFlyCapture(drivers::camera::EFrameRate v)
+{
+    switch(v)
+    {
+        case drivers::camera::EFrameRate::FRAMERATE_15     : return FlyCapture2::FRAMERATE_15;
+        case drivers::camera::EFrameRate::FRAMERATE_30     : return FlyCapture2::FRAMERATE_30;
+        case drivers::camera::EFrameRate::FRAMERATE_60     : return FlyCapture2::FRAMERATE_60;
+        case drivers::camera::EFrameRate::FRAMERATE_120    : return FlyCapture2::FRAMERATE_120;
+        case drivers::camera::EFrameRate::FRAMERATE_240    : return FlyCapture2::FRAMERATE_240;
+        case drivers::camera::EFrameRate::FRAMERATE_CUSTOM : return FlyCapture2::FRAMERATE_FORMAT7;
+        default: return FlyCapture2::NUM_FRAMERATES;
+    }
+}
 
-static constexpr FlyCapture2::PropertyType RPCFeatureToFlyCapture[] = {
-    /* BRIGHTNESS   */  FlyCapture2::BRIGHTNESS,
-    /* AUTO_EXPOSURE*/  FlyCapture2::AUTO_EXPOSURE,
-    /* SHARPNESS    */  FlyCapture2::SHARPNESS,
-    /* WHITE_BALANCE*/  FlyCapture2::WHITE_BALANCE,
-    /* HUE          */  FlyCapture2::HUE,
-    /* SATURATION   */  FlyCapture2::SATURATION,
-    /* GAMMA        */  FlyCapture2::GAMMA,
-    /* IRIS         */  FlyCapture2::IRIS,
-    /* FOCUS        */  FlyCapture2::FOCUS,
-    /* ZOOM         */  FlyCapture2::ZOOM,
-    /* PAN          */  FlyCapture2::PAN,
-    /* TILT         */  FlyCapture2::TILT,
-    /* SHUTTER      */  FlyCapture2::SHUTTER,
-    /* GAIN         */  FlyCapture2::GAIN,
-    /* TRIGGER_MODE */  FlyCapture2::TRIGGER_MODE,
-    /* TRIGGER_DELAY*/  FlyCapture2::TRIGGER_DELAY,
-    /* FRAME_RATE   */  FlyCapture2::FRAME_RATE,
-    /* TEMPERATURE  */  FlyCapture2::TEMPERATURE
-};
+static inline FlyCapture2::PropertyType FeatureToFlyCapture(drivers::camera::EFeature v)
+{
+    switch(v)
+    {
+        case drivers::camera::EFeature::BRIGHTNESS   : return FlyCapture2::BRIGHTNESS;
+        case drivers::camera::EFeature::EXPOSURE     : return FlyCapture2::AUTO_EXPOSURE;
+        case drivers::camera::EFeature::SHARPNESS    : return FlyCapture2::SHARPNESS;
+        case drivers::camera::EFeature::WHITE_BALANCE: return FlyCapture2::WHITE_BALANCE;
+        case drivers::camera::EFeature::HUE          : return FlyCapture2::HUE;
+        case drivers::camera::EFeature::SATURATION   : return FlyCapture2::SATURATION;
+        case drivers::camera::EFeature::GAMMA        : return FlyCapture2::GAMMA;
+        case drivers::camera::EFeature::IRIS         : return FlyCapture2::IRIS;
+        case drivers::camera::EFeature::FOCUS        : return FlyCapture2::FOCUS;
+        case drivers::camera::EFeature::ZOOM         : return FlyCapture2::ZOOM;
+        case drivers::camera::EFeature::PAN          : return FlyCapture2::PAN;
+        case drivers::camera::EFeature::TILT         : return FlyCapture2::TILT;
+        case drivers::camera::EFeature::SHUTTER      : return FlyCapture2::SHUTTER;
+        case drivers::camera::EFeature::GAIN         : return FlyCapture2::GAIN;
+        case drivers::camera::EFeature::TRIGGER_MODE : return FlyCapture2::TRIGGER_MODE;
+        case drivers::camera::EFeature::TRIGGER_DELAY: return FlyCapture2::TRIGGER_DELAY;
+        case drivers::camera::EFeature::FRAME_RATE   : return FlyCapture2::FRAME_RATE;
+        case drivers::camera::EFeature::TEMPERATURE  : return FlyCapture2::TEMPERATURE;
+        default: return FlyCapture2::UNSPECIFIED_PROPERTY_TYPE;
+    }
+}
 
 drivers::camera::PointGrey::PGException::PGException(const FlyCapture2::Error* fcrc, const char* file, int line)
 { 
@@ -204,7 +220,7 @@ void drivers::camera::PointGrey::close()
 
 void drivers::camera::PointGrey::setModeAndFramerate(EVideoMode vmode, EFrameRate framerate)
 {
-    FlyCapture2::Error fcrc = m_pimpl->m_cam.SetVideoModeAndFrameRate(RPCVideoModeToFlyCapture[(int)vmode], RPCFrameRateToFlyCapture[(int)framerate]);
+    FlyCapture2::Error fcrc = m_pimpl->m_cam.SetVideoModeAndFrameRate(VideoModeToFlyCapture(vmode), FrameRateToFlyCapture(framerate));
     PG_CHECK_ERROR(fcrc);
 
     m_width = drivers::camera::VideoModeToWidth(vmode);
@@ -334,7 +350,7 @@ void drivers::camera::PointGrey::start()
     is_running = true;
 }
 
-void drivers::camera::PointGrey::start(drivers::camera::FrameCallbackT c)
+void drivers::camera::PointGrey::start(drivers::camera::FrameCallback c)
 {
     if(is_running) { return; }
     
@@ -454,7 +470,7 @@ bool drivers::camera::PointGrey::captureFrameImpl(FrameBuffer* cf1, FrameBuffer*
 
 bool drivers::camera::PointGrey::getFeaturePower(EFeature fidx)
 {
-    FlyCapture2::PropertyType propt = RPCFeatureToFlyCapture[(int)fidx];
+    FlyCapture2::PropertyType propt = FeatureToFlyCapture(fidx);
     
     FlyCapture2::Property p(propt);
     
@@ -466,7 +482,7 @@ bool drivers::camera::PointGrey::getFeaturePower(EFeature fidx)
 
 void drivers::camera::PointGrey::setFeaturePower(EFeature fidx, bool b)
 {
-    FlyCapture2::PropertyType propt = RPCFeatureToFlyCapture[(int)fidx];
+    FlyCapture2::PropertyType propt = FeatureToFlyCapture(fidx);
     
     FlyCapture2::Property p(propt);
     
@@ -481,7 +497,7 @@ void drivers::camera::PointGrey::setFeaturePower(EFeature fidx, bool b)
 
 bool drivers::camera::PointGrey::getFeatureAuto(EFeature fidx)
 {
-    FlyCapture2::PropertyType propt = RPCFeatureToFlyCapture[(int)fidx];
+    FlyCapture2::PropertyType propt = FeatureToFlyCapture(fidx);
     
     FlyCapture2::Property p(propt);
     
@@ -493,7 +509,7 @@ bool drivers::camera::PointGrey::getFeatureAuto(EFeature fidx)
 
 void drivers::camera::PointGrey::setFeatureAuto(EFeature fidx, bool b)
 {
-    FlyCapture2::PropertyType propt = RPCFeatureToFlyCapture[(int)fidx];
+    FlyCapture2::PropertyType propt = FeatureToFlyCapture(fidx);
     
     FlyCapture2::Property p(propt);
     
@@ -508,7 +524,7 @@ void drivers::camera::PointGrey::setFeatureAuto(EFeature fidx, bool b)
 
 uint32_t drivers::camera::PointGrey::getFeatureValue(EFeature fidx)
 {
-    FlyCapture2::PropertyType propt = RPCFeatureToFlyCapture[(int)fidx];
+    FlyCapture2::PropertyType propt = FeatureToFlyCapture(fidx);
     
     FlyCapture2::Property p(propt);
     
@@ -520,7 +536,7 @@ uint32_t drivers::camera::PointGrey::getFeatureValue(EFeature fidx)
 
 float drivers::camera::PointGrey::getFeatureValueAbs(EFeature fidx)
 {
-    FlyCapture2::PropertyType propt = RPCFeatureToFlyCapture[(int)fidx];
+    FlyCapture2::PropertyType propt = FeatureToFlyCapture(fidx);
     
     FlyCapture2::Property p(propt);
     
@@ -532,7 +548,7 @@ float drivers::camera::PointGrey::getFeatureValueAbs(EFeature fidx)
 
 uint32_t drivers::camera::PointGrey::getFeatureMin(EFeature fidx)
 {
-    FlyCapture2::PropertyType propt = RPCFeatureToFlyCapture[(int)fidx];
+    FlyCapture2::PropertyType propt = FeatureToFlyCapture(fidx);
     
     FlyCapture2::PropertyInfo pinfo(propt);
     
@@ -544,7 +560,7 @@ uint32_t drivers::camera::PointGrey::getFeatureMin(EFeature fidx)
 
 uint32_t drivers::camera::PointGrey::getFeatureMax(EFeature fidx)
 {
-    FlyCapture2::PropertyType propt = RPCFeatureToFlyCapture[(int)fidx];
+    FlyCapture2::PropertyType propt = FeatureToFlyCapture(fidx);
     
     FlyCapture2::PropertyInfo pinfo(propt);
     
@@ -556,7 +572,7 @@ uint32_t drivers::camera::PointGrey::getFeatureMax(EFeature fidx)
 
 void drivers::camera::PointGrey::setFeatureValue(EFeature fidx, uint32_t val)
 {
-    FlyCapture2::PropertyType propt = RPCFeatureToFlyCapture[(int)fidx];
+    FlyCapture2::PropertyType propt = FeatureToFlyCapture(fidx);
     
     FlyCapture2::Property p(propt);
     
@@ -570,7 +586,7 @@ void drivers::camera::PointGrey::setFeatureValue(EFeature fidx, uint32_t val)
 
 void drivers::camera::PointGrey::setFeatureValueAbs(EFeature fidx, float val)
 {
-    FlyCapture2::PropertyType propt = RPCFeatureToFlyCapture[(int)fidx];
+    FlyCapture2::PropertyType propt = FeatureToFlyCapture(fidx);
     
     FlyCapture2::Property p(propt);
     
@@ -585,7 +601,7 @@ void drivers::camera::PointGrey::setFeatureValueAbs(EFeature fidx, float val)
 
 void drivers::camera::PointGrey::setFeature(EFeature fidx, bool power, bool automatic, uint32_t val)
 {
-    FlyCapture2::PropertyType propt = RPCFeatureToFlyCapture[(int)fidx];
+    FlyCapture2::PropertyType propt = FeatureToFlyCapture(fidx);
     
     FlyCapture2::Property p(propt);
     

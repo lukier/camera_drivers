@@ -40,64 +40,83 @@
 
 #define FIREWIRE_CHECK_ERROR(err_code) { if(err_code != DC1394_SUCCESS) { throw FireWireException(err_code, __FILE__, __LINE__); } }
 
-static constexpr dc1394video_mode_t RPCVideoModeToDC1394[] = {
-    /* VIDEOMODE_640x480RGB     */  DC1394_VIDEO_MODE_640x480_RGB8,  
-    /* VIDEOMODE_640x480Y8      */  DC1394_VIDEO_MODE_640x480_MONO8,
-    /* VIDEOMODE_640x480Y16     */  DC1394_VIDEO_MODE_640x480_MONO16,
-    /* VIDEOMODE_800x600RGB     */  DC1394_VIDEO_MODE_800x600_RGB8,
-    /* VIDEOMODE_800x600Y8      */  DC1394_VIDEO_MODE_800x600_MONO8,
-    /* VIDEOMODE_800x600Y16     */  DC1394_VIDEO_MODE_800x600_MONO16,
-    /* VIDEOMODE_1024x768RGB    */  DC1394_VIDEO_MODE_1024x768_RGB8,
-    /* VIDEOMODE_1024x768Y8     */  DC1394_VIDEO_MODE_1024x768_MONO8,
-    /* VIDEOMODE_1024x768Y16    */  DC1394_VIDEO_MODE_1024x768_MONO16,
-    /* VIDEOMODE_1280x960RGB    */  DC1394_VIDEO_MODE_1280x960_RGB8,
-    /* VIDEOMODE_1280x960Y8     */  DC1394_VIDEO_MODE_1280x960_MONO8,
-    /* VIDEOMODE_1280x960Y16    */  DC1394_VIDEO_MODE_1280x960_MONO16,
-    /* VIDEOMODE_1600x1200RGB   */  DC1394_VIDEO_MODE_1600x1200_RGB8,
-    /* VIDEOMODE_1600x1200Y8    */  DC1394_VIDEO_MODE_1600x1200_MONO8,
-    /* VIDEOMODE_1600x1200Y16   */  DC1394_VIDEO_MODE_1600x1200_MONO16,
-    /* VIDEOMODE_CUSTOM         */  DC1394_VIDEO_MODE_FORMAT7_0
-};
-
-static constexpr dc1394framerate_t RPCFrameRateToDC1394[] = {
-    /* FRAMERATE_15     */  DC1394_FRAMERATE_15,
-    /* FRAMERATE_30     */  DC1394_FRAMERATE_30,
-    /* FRAMERATE_60     */  DC1394_FRAMERATE_60,
-    /* FRAMERATE_120    */  DC1394_FRAMERATE_120,
-    /* FRAMERATE_240    */  DC1394_FRAMERATE_240,
-    /* FRAMERATE_CUSTOM */  DC1394_FRAMERATE_240
-};
-
-static constexpr dc1394feature_t RPCFeatureToDC1394[] = {
-    /* BRIGHTNESS   */  DC1394_FEATURE_BRIGHTNESS,
-    /* AUTO_EXPOSURE*/  DC1394_FEATURE_EXPOSURE,
-    /* SHARPNESS    */  DC1394_FEATURE_SHARPNESS,
-    /* WHITE_BALANCE*/  DC1394_FEATURE_WHITE_BALANCE,
-    /* HUE          */  DC1394_FEATURE_HUE,
-    /* SATURATION   */  DC1394_FEATURE_SATURATION,
-    /* GAMMA        */  DC1394_FEATURE_GAMMA,
-    /* IRIS         */  DC1394_FEATURE_IRIS,
-    /* FOCUS        */  DC1394_FEATURE_FOCUS,
-    /* ZOOM         */  DC1394_FEATURE_ZOOM,
-    /* PAN          */  DC1394_FEATURE_PAN,
-    /* TILT         */  DC1394_FEATURE_TILT,
-    /* SHUTTER      */  DC1394_FEATURE_SHUTTER,
-    /* GAIN         */  DC1394_FEATURE_GAIN,
-    /* TRIGGER_MODE */  DC1394_FEATURE_TRIGGER,
-    /* TRIGGER_DELAY*/  DC1394_FEATURE_TRIGGER_DELAY,
-    /* FRAME_RATE   */  DC1394_FEATURE_FRAME_RATE,
-    /* TEMPERATURE  */  DC1394_FEATURE_TEMPERATURE
-};
-
-static constexpr dc1394speed_t RPCISOSpeedToDC1394[] = 
+static inline dc1394video_mode_t VideoModeToDC1394(drivers::camera::EVideoMode v)
 {
-    DC1394_ISO_SPEED_100,
-    DC1394_ISO_SPEED_200,
-    DC1394_ISO_SPEED_400,
-    DC1394_ISO_SPEED_800,
-    DC1394_ISO_SPEED_1600,
-    DC1394_ISO_SPEED_3200
-};
+    switch(v)
+    {
+        case drivers::camera::EVideoMode::VIDEOMODE_640x480RGB   : return DC1394_VIDEO_MODE_640x480_RGB8;
+        case drivers::camera::EVideoMode::VIDEOMODE_640x480Y8    : return DC1394_VIDEO_MODE_640x480_MONO8;
+        case drivers::camera::EVideoMode::VIDEOMODE_640x480Y16   : return DC1394_VIDEO_MODE_640x480_MONO16;
+        case drivers::camera::EVideoMode::VIDEOMODE_800x600RGB   : return DC1394_VIDEO_MODE_800x600_RGB8;
+        case drivers::camera::EVideoMode::VIDEOMODE_800x600Y8    : return DC1394_VIDEO_MODE_800x600_MONO8;
+        case drivers::camera::EVideoMode::VIDEOMODE_800x600Y16   : return DC1394_VIDEO_MODE_800x600_MONO16;
+        case drivers::camera::EVideoMode::VIDEOMODE_1024x768RGB  : return DC1394_VIDEO_MODE_1024x768_RGB8;
+        case drivers::camera::EVideoMode::VIDEOMODE_1024x768Y8   : return DC1394_VIDEO_MODE_1024x768_MONO8;
+        case drivers::camera::EVideoMode::VIDEOMODE_1024x768Y16  : return DC1394_VIDEO_MODE_1024x768_MONO16;
+        case drivers::camera::EVideoMode::VIDEOMODE_1280x960RGB  : return DC1394_VIDEO_MODE_1280x960_RGB8;
+        case drivers::camera::EVideoMode::VIDEOMODE_1280x960Y8   : return DC1394_VIDEO_MODE_1280x960_MONO8;
+        case drivers::camera::EVideoMode::VIDEOMODE_1280x960Y16  : return DC1394_VIDEO_MODE_1280x960_MONO16;
+        case drivers::camera::EVideoMode::VIDEOMODE_1600x1200RGB : return DC1394_VIDEO_MODE_1600x1200_RGB8;
+        case drivers::camera::EVideoMode::VIDEOMODE_1600x1200Y8  : return DC1394_VIDEO_MODE_1600x1200_MONO8;
+        case drivers::camera::EVideoMode::VIDEOMODE_1600x1200Y16 : return DC1394_VIDEO_MODE_1600x1200_MONO16;
+        case drivers::camera::EVideoMode::VIDEOMODE_CUSTOM       : return DC1394_VIDEO_MODE_FORMAT7_0;
+        default: return (dc1394video_mode_t)0;
+    }
+}
+
+static inline dc1394framerate_t FrameRateToDC1394(drivers::camera::EFrameRate v)
+{
+    switch(v)
+    {
+        case drivers::camera::EFrameRate::FRAMERATE_15     : return DC1394_FRAMERATE_15;
+        case drivers::camera::EFrameRate::FRAMERATE_30     : return DC1394_FRAMERATE_30;
+        case drivers::camera::EFrameRate::FRAMERATE_60     : return DC1394_FRAMERATE_60;
+        case drivers::camera::EFrameRate::FRAMERATE_120    : return DC1394_FRAMERATE_120;
+        case drivers::camera::EFrameRate::FRAMERATE_240    : return DC1394_FRAMERATE_240;
+        case drivers::camera::EFrameRate::FRAMERATE_CUSTOM : return (dc1394framerate_t)0;
+        default: return (dc1394framerate_t)0;
+    }
+}
+
+static inline dc1394feature_t FeatureToDC1394(drivers::camera::EFeature v)
+{
+    switch(v)
+    {
+        case drivers::camera::EFeature::BRIGHTNESS   : return DC1394_FEATURE_BRIGHTNESS;
+        case drivers::camera::EFeature::EXPOSURE     : return DC1394_FEATURE_EXPOSURE;
+        case drivers::camera::EFeature::SHARPNESS    : return DC1394_FEATURE_SHARPNESS;
+        case drivers::camera::EFeature::WHITE_BALANCE: return DC1394_FEATURE_WHITE_BALANCE;
+        case drivers::camera::EFeature::HUE          : return DC1394_FEATURE_HUE;
+        case drivers::camera::EFeature::SATURATION   : return DC1394_FEATURE_SATURATION;
+        case drivers::camera::EFeature::GAMMA        : return DC1394_FEATURE_GAMMA;
+        case drivers::camera::EFeature::IRIS         : return DC1394_FEATURE_IRIS;
+        case drivers::camera::EFeature::FOCUS        : return DC1394_FEATURE_FOCUS;
+        case drivers::camera::EFeature::ZOOM         : return DC1394_FEATURE_ZOOM;
+        case drivers::camera::EFeature::PAN          : return DC1394_FEATURE_PAN;
+        case drivers::camera::EFeature::TILT         : return DC1394_FEATURE_TILT;
+        case drivers::camera::EFeature::SHUTTER      : return DC1394_FEATURE_SHUTTER;
+        case drivers::camera::EFeature::GAIN         : return DC1394_FEATURE_GAIN;
+        case drivers::camera::EFeature::TRIGGER_MODE : return DC1394_FEATURE_TRIGGER;
+        case drivers::camera::EFeature::TRIGGER_DELAY: return DC1394_FEATURE_TRIGGER_DELAY;
+        case drivers::camera::EFeature::FRAME_RATE   : return DC1394_FEATURE_FRAME_RATE;
+        case drivers::camera::EFeature::TEMPERATURE  : return DC1394_FEATURE_TEMPERATURE;
+        default: return (dc1394feature_t)0;
+    }
+}
+
+static inline dc1394speed_t ISOSpeedToDC1394(drivers::camera::FireWire::EISOSpeed v)
+{
+    switch(v)
+    {
+        case drivers::camera::FireWire::EISOSpeed::ISO_SPEED_100  : return DC1394_ISO_SPEED_100;
+        case drivers::camera::FireWire::EISOSpeed::ISO_SPEED_200  : return DC1394_ISO_SPEED_200;
+        case drivers::camera::FireWire::EISOSpeed::ISO_SPEED_400  : return DC1394_ISO_SPEED_400;
+        case drivers::camera::FireWire::EISOSpeed::ISO_SPEED_800  : return DC1394_ISO_SPEED_800;
+        case drivers::camera::FireWire::EISOSpeed::ISO_SPEED_1600 : return DC1394_ISO_SPEED_1600;
+        case drivers::camera::FireWire::EISOSpeed::ISO_SPEED_3200 : return DC1394_ISO_SPEED_3200;
+        default: return (dc1394speed_t)0;
+    }
+}
 
 drivers::camera::FireWire::FireWireException::FireWireException(uint32_t errcode, const char* file, int line)
 { 
@@ -224,7 +243,7 @@ void drivers::camera::FireWire::close()
 void drivers::camera::FireWire::setModeAndFramerate(EVideoMode vmode, EFrameRate framerate)
 {
     dc1394error_t err;
-    dc1394speed_t dc_iso_speed = RPCISOSpeedToDC1394[(int)iso_speed];
+    dc1394speed_t dc_iso_speed = ISOSpeedToDC1394(iso_speed);
     
     if(dc_iso_speed >= (int)DC1394_ISO_SPEED_800)
     {
@@ -241,15 +260,15 @@ void drivers::camera::FireWire::setModeAndFramerate(EVideoMode vmode, EFrameRate
     err = dc1394_video_set_iso_speed(m_pimpl->fw_camera, dc_iso_speed);
     FIREWIRE_CHECK_ERROR(err);
     
-    err = dc1394_video_set_mode(m_pimpl->fw_camera, RPCVideoModeToDC1394[(int)vmode]);
+    err = dc1394_video_set_mode(m_pimpl->fw_camera, VideoModeToDC1394(vmode));
     FIREWIRE_CHECK_ERROR(err);
     
     // get width & height
-    err = dc1394_get_image_size_from_video_mode(m_pimpl->fw_camera, RPCVideoModeToDC1394[(int)vmode], (uint32_t*)&m_width, (uint32_t*)&m_height);
+    err = dc1394_get_image_size_from_video_mode(m_pimpl->fw_camera, VideoModeToDC1394(vmode), (uint32_t*)&m_width, (uint32_t*)&m_height);
     FIREWIRE_CHECK_ERROR(err);
     
     // set framerate
-    err = dc1394_video_set_framerate(m_pimpl->fw_camera, RPCFrameRateToDC1394[(int)framerate]);
+    err = dc1394_video_set_framerate(m_pimpl->fw_camera, FrameRateToDC1394(framerate));
     FIREWIRE_CHECK_ERROR(err);
     
     // set buffer count
@@ -262,7 +281,7 @@ void drivers::camera::FireWire::setModeAndFramerate(EVideoMode vmode, EFrameRate
 void drivers::camera::FireWire::setCustomMode(drivers::camera::EPixelFormat pixfmt, unsigned int width, unsigned int height, unsigned int offset_x, unsigned int offset_y, uint16_t format7mode)
 {
     dc1394error_t err;
-    dc1394speed_t dc_iso_speed = RPCISOSpeedToDC1394[(int)iso_speed];
+    dc1394speed_t dc_iso_speed = ISOSpeedToDC1394(iso_speed);
     
     if(dc_iso_speed >= (int)DC1394_ISO_SPEED_800)
     {
@@ -416,7 +435,7 @@ bool drivers::camera::FireWire::getFeaturePower(EFeature fidx)
 
     dc1394switch_t ison = DC1394_OFF;
     
-    err = dc1394_feature_get_power(m_pimpl->fw_camera, RPCFeatureToDC1394[(int)fidx], &ison);
+    err = dc1394_feature_get_power(m_pimpl->fw_camera, FeatureToDC1394(fidx), &ison);
     FIREWIRE_CHECK_ERROR(err);
     
     return ison == DC1394_ON;
@@ -426,7 +445,7 @@ void drivers::camera::FireWire::setFeaturePower(EFeature fidx, bool b)
 {
     dc1394error_t err;
     
-    err = dc1394_feature_set_power(m_pimpl->fw_camera, RPCFeatureToDC1394[(int)fidx], b == true ? DC1394_ON : DC1394_OFF);
+    err = dc1394_feature_set_power(m_pimpl->fw_camera, FeatureToDC1394(fidx), b == true ? DC1394_ON : DC1394_OFF);
     FIREWIRE_CHECK_ERROR(err);
 }
 
@@ -435,7 +454,7 @@ bool drivers::camera::FireWire::getFeatureAuto(EFeature fidx)
     dc1394error_t err;
 
     dc1394feature_mode_t fmode;
-    err = dc1394_feature_get_mode(m_pimpl->fw_camera, RPCFeatureToDC1394[(int)fidx], &fmode);
+    err = dc1394_feature_get_mode(m_pimpl->fw_camera, FeatureToDC1394(fidx), &fmode);
     FIREWIRE_CHECK_ERROR(err);
     
     return fmode == DC1394_FEATURE_MODE_AUTO;
@@ -445,7 +464,7 @@ void drivers::camera::FireWire::setFeatureAuto(EFeature fidx, bool b)
 {
     dc1394error_t err;
     
-    err = dc1394_feature_set_mode(m_pimpl->fw_camera, RPCFeatureToDC1394[(int)fidx], b == true ? DC1394_FEATURE_MODE_AUTO : DC1394_FEATURE_MODE_MANUAL);
+    err = dc1394_feature_set_mode(m_pimpl->fw_camera, FeatureToDC1394(fidx), b == true ? DC1394_FEATURE_MODE_AUTO : DC1394_FEATURE_MODE_MANUAL);
     FIREWIRE_CHECK_ERROR(err);
 }
 
@@ -454,7 +473,7 @@ uint32_t drivers::camera::FireWire::getFeatureValue(EFeature fidx)
     dc1394error_t err;
     uint32_t ret = 0;
     
-    err = dc1394_feature_get_value(m_pimpl->fw_camera, RPCFeatureToDC1394[(int)fidx], &ret);
+    err = dc1394_feature_get_value(m_pimpl->fw_camera, FeatureToDC1394(fidx), &ret);
     FIREWIRE_CHECK_ERROR(err);
     
     return ret;
@@ -465,7 +484,7 @@ float drivers::camera::FireWire::getFeatureValueAbs(EFeature fidx)
     dc1394error_t err;
     float ret = 0.0f;
     
-    err = dc1394_feature_get_absolute_value(m_pimpl->fw_camera, RPCFeatureToDC1394[(int)fidx], &ret);
+    err = dc1394_feature_get_absolute_value(m_pimpl->fw_camera, FeatureToDC1394(fidx), &ret);
     FIREWIRE_CHECK_ERROR(err);
     
     return ret;
@@ -477,7 +496,7 @@ uint32_t drivers::camera::FireWire::getFeatureMin(EFeature fidx)
     
     uint32_t vmin, vmax;
     
-    err = dc1394_feature_get_boundaries(m_pimpl->fw_camera, RPCFeatureToDC1394[(int)fidx], &vmin, &vmax);
+    err = dc1394_feature_get_boundaries(m_pimpl->fw_camera, FeatureToDC1394(fidx), &vmin, &vmax);
     FIREWIRE_CHECK_ERROR(err);
     
     return vmin;
@@ -489,7 +508,7 @@ uint32_t drivers::camera::FireWire::getFeatureMax(EFeature fidx)
     
     uint32_t vmin, vmax;
     
-    err = dc1394_feature_get_boundaries(m_pimpl->fw_camera, RPCFeatureToDC1394[(int)fidx], &vmin, &vmax);
+    err = dc1394_feature_get_boundaries(m_pimpl->fw_camera, FeatureToDC1394(fidx), &vmin, &vmax);
     FIREWIRE_CHECK_ERROR(err);
     
     return vmax;
@@ -499,7 +518,7 @@ void drivers::camera::FireWire::setFeatureValue(EFeature fidx, uint32_t val)
 {
     dc1394error_t err;
     
-    err = dc1394_feature_set_value(m_pimpl->fw_camera, RPCFeatureToDC1394[(int)fidx], val);
+    err = dc1394_feature_set_value(m_pimpl->fw_camera, FeatureToDC1394(fidx), val);
     FIREWIRE_CHECK_ERROR(err);
 }
 
@@ -507,7 +526,7 @@ void drivers::camera::FireWire::setFeatureValueAbs(EFeature fidx, float val)
 {
     dc1394error_t err;
     
-    err = dc1394_feature_set_absolute_value(m_pimpl->fw_camera, RPCFeatureToDC1394[(int)fidx], val);
+    err = dc1394_feature_set_absolute_value(m_pimpl->fw_camera, FeatureToDC1394(fidx), val);
     FIREWIRE_CHECK_ERROR(err);
 }
 

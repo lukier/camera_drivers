@@ -61,7 +61,9 @@ enum class EPixelFormat
     PIXEL_FORMAT_MONO8 = 0,
     PIXEL_FORMAT_MONO16,
     PIXEL_FORMAT_RGB8,
+    PIXEL_FORMAT_BGR8,
     PIXEL_FORMAT_RGBA8,
+    PIXEL_FORMAT_BGRA8,
     PIXEL_FORMAT_MONO32F,
     PIXEL_FORMAT_RGB32F,
     PIXEL_FORMAT_DEPTH_U16,
@@ -72,8 +74,8 @@ enum class EPixelFormat
 };
 
 const char* PixelFormatToString(EPixelFormat epf);
-unsigned int PixelFormatToBytesPerPixel(EPixelFormat epf);
-unsigned int PixelFormatToChannelCount(EPixelFormat epf);
+std::size_t PixelFormatToBytesPerPixel(EPixelFormat epf);
+std::size_t PixelFormatToChannelCount(EPixelFormat epf);
     
 enum class EVideoMode
 {
@@ -93,13 +95,13 @@ enum class EVideoMode
     VIDEOMODE_1600x1200Y8,
     VIDEOMODE_1600x1200Y16,
     VIDEOMODE_CUSTOM,
-    Unsupported
+    VIDEOMODE_UNSUPPORTED
 };
 
 const char* VideoModeToString(EVideoMode v);
 std::size_t VideoModeToWidth(EVideoMode v);
 std::size_t VideoModeToHeight(EVideoMode v);
-unsigned int VideoModeToChannels(EVideoMode v);
+std::size_t VideoModeToChannels(EVideoMode v);
 EPixelFormat VideoModeToPixelFormat(EVideoMode v);
 
 enum class EFrameRate
@@ -110,16 +112,16 @@ enum class EFrameRate
     FRAMERATE_120,
     FRAMERATE_240,
     FRAMERATE_CUSTOM,
-    Unsupported
+    FRAMERATE_UNSUPPORTED
 };
 
 const char* FrameRateToString(EFrameRate fr);
-unsigned int FrameRateToFPS(EFrameRate fr);
+std::size_t FrameRateToFPS(EFrameRate fr);
 
 enum class EFeature
 {
     BRIGHTNESS = 0,
-    AUTO_EXPOSURE,
+    EXPOSURE,
     SHARPNESS, 
     WHITE_BALANCE,
     HUE,
@@ -136,7 +138,7 @@ enum class EFeature
     TRIGGER_DELAY,
     FRAME_RATE, 
     TEMPERATURE,
-    Unsupported
+    UNSUPPORTED
 };
 
 const char* FeatureToString(EFeature ef);
@@ -536,7 +538,93 @@ private:
 /**
  * Callback type for video streams.
  */
-typedef std::function<void(const FrameBuffer&)> FrameCallbackT;
+typedef std::function<void(const FrameBuffer&)> FrameCallback;
+
+/**
+ * Generic event class.
+ */
+class EventData
+{
+public:
+    uint64_t Timestamp;   /// [ns]
+    uint64_t FrameNumber; /// 
+    uint64_t EventSource; /// [user defined]
+};
+
+/**
+ * Callback type for events.
+ */
+typedef std::function<void(const EventData&)> EventCallback;
+
+/**
+ * Generic accelerometer data class.
+ */
+class AccelerometerData
+{
+public:
+    bool                IsValid;
+    EventData           Event;
+    std::array<float,3> Accelerometer;  /// [m/s^2] 
+    float               Temperature;    /// [degC] 
+};
+
+/**
+ * Callback type for accelerometer.
+ */
+typedef std::function<void(const AccelerometerData&)> AccelerometerCallback;
+
+/**
+ * Generic gyroscope data class.
+ */
+class GyroscopeData
+{
+public:
+    bool                IsValid;
+    EventData           Event;
+    std::array<float,3> Gyroscope;      /// [rad/s]
+    float               Temperature;    /// [degC] 
+};
+
+/**
+ * Callback type for gyroscope.
+ */
+typedef std::function<void(const GyroscopeData&)> GyroscopeCallback;
+
+/**
+ * Generic compass data class.
+ */
+class CompassData
+{
+public:
+    bool                IsValid;
+    EventData           Event;
+    std::array<float,3> Compass;        /// [uT]
+    float               Temperature;    /// [degC] 
+};
+
+/**
+ * Callback type for compass.
+ */
+typedef std::function<void(const CompassData&)> CompassCallback;
+
+/**
+ * Generic motion class.
+ */
+class MotionData
+{
+public:
+    bool                IsValid;
+    EventData           Event;
+    std::array<float,3> Accelerometer;  /// [m/s^2] 
+    std::array<float,3> Gyroscope;      /// [rad/s]
+    std::array<float,3> Compass;        /// [uT]
+    float               Temperature;    /// [degC] 
+};
+
+/**
+ * Callback type for motion.
+ */
+typedef std::function<void(const MotionData&)> MotionCallback;
 
 /**
  * Camera Information & Configuration
