@@ -321,3 +321,17 @@ void drivers::camera::FrameBuffer::create(void* extobject, std::function<void (v
     if(astride == 0) { stride = width * PixelFormatToBytesPerPixel(pixfmt); } else { stride = astride; }
     data_size = stride * height;
 }
+
+void drivers::camera::FrameBuffer::release() 
+{ 
+    if(isValid())
+    {
+        if(deleter) 
+        { 
+            deleter(associated_buffer);  
+        }
+        
+        memaccess = nullptr; 
+        
+    }
+}

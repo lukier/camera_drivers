@@ -41,6 +41,8 @@
 #include <OpenNI.h>
 #include <PS1080.h>
 
+#include <boost/format.hpp>
+
 drivers::camera::OpenNI::OpenNIException::OpenNIException(int status, const char* file, int line)
 {
     std::string msg;
@@ -701,84 +703,52 @@ bool drivers::camera::OpenNI::captureFrameImpl(FrameBuffer* cf1, FrameBuffer* cf
     std::chrono::high_resolution_clock::time_point tp = std::chrono::high_resolution_clock::now();
     std::chrono::nanoseconds d = tp.time_since_epoch();
     
+    auto set_frame = [&](openni::VideoStream& vs, FrameBuffer* fb)
+    {
+        openni::VideoFrameRef* ni_frame = new openni::VideoFrameRef();
+        vs.readFrame(ni_frame);
+        
+        if(ni_frame->isValid() && (fb != nullptr))
+        {
+            drivers::camera::EPixelFormat out_pixfmt = OpenNIToPixelFormat(*ni_frame);
+            fb->create(ni_frame, std::bind(&drivers::camera::OpenNI::OpenNIAPIPimpl::frame_release, m_pimpl.get(), std::placeholders::_1),
+                       (uint8_t*)ni_frame->getData(), 
+                       ni_frame->getWidth(), ni_frame->getHeight(), out_pixfmt, ni_frame->getStrideInBytes());
+            fb->setFrameCounter(ni_frame->getFrameIndex());
+            fb->setTimeStamp(ni_frame->getTimestamp());
+            fb->setPCTimeStamp(d.count());
+        }
+    };
+    
     // handle IR separately
     if(is_running_ir)
     {
-        openni::VideoFrameRef* ir_frame = new openni::VideoFrameRef();
-        m_pimpl->vs_ir.readFrame(ir_frame);
-        
-        if(ir_frame->isValid() && (cf1 != nullptr))
-        {
-            drivers::camera::EPixelFormat ir_pixfmt = OpenNIToPixelFormat(*ir_frame);
-            cf1->create(ir_frame, std::bind(&drivers::camera::OpenNI::OpenNIAPIPimpl::frame_release, m_pimpl.get(), std::placeholders::_1), (uint8_t*)ir_frame->getData(), ir_frame->getWidth(), ir_frame->getHeight(), ir_pixfmt, ir_frame->getStrideInBytes());
-            cf1->setFrameCounter(ir_frame->getFrameIndex());
-            cf1->setTimeStamp(ir_frame->getTimestamp());
-            cf1->setPCTimeStamp(d.count());
-        }
+        set_frame(m_pimpl->vs_ir, cf1);
     }
     else
     {
         if(is_running_depth && is_running_rgb)
         {
             // Depth
-            openni::VideoFrameRef* depth_frame = new openni::VideoFrameRef();
-            m_pimpl->vs_depth.readFrame(depth_frame);
-            
-            if(depth_frame->isValid() && (cf1 != nullptr))
-            {
-                drivers::camera::EPixelFormat depth_pixfmt = OpenNIToPixelFormat(*depth_frame);
-                cf1->create(depth_frame, std::bind(&drivers::camera::OpenNI::OpenNIAPIPimpl::frame_release, m_pimpl.get(), std::placeholders::_1), (uint8_t*)depth_frame->getData(), depth_frame->getWidth(), depth_frame->getHeight(), depth_pixfmt, depth_frame->getStrideInBytes());
-                cf1->setFrameCounter(depth_frame->getFrameIndex());
-                cf1->setTimeStamp(depth_frame->getTimestamp());
-                cf1->setPCTimeStamp(d.count());
-            }
-            
+            set_frame(m_pimpl->vs_depth, cf1);
+                        
             // RGB
-            openni::VideoFrameRef* rgb_frame = new openni::VideoFrameRef();
-            m_pimpl->vs_rgb.readFrame(rgb_frame);
-            
-            if(rgb_frame->isValid() && (cf2 != nullptr))
-            {
-                drivers::camera::EPixelFormat rgb_pixfmt = OpenNIToPixelFormat(*rgb_frame);
-                cf2->create(rgb_frame, std::bind(&drivers::camera::OpenNI::OpenNIAPIPimpl::frame_release, m_pimpl.get(), std::placeholders::_1), (uint8_t*)rgb_frame->getData(), rgb_frame->getWidth(), rgb_frame->getHeight(), rgb_pixfmt, rgb_frame->getStrideInBytes());
-                cf2->setFrameCounter(rgb_frame->getFrameIndex());
-                cf2->setTimeStamp(rgb_frame->getTimestamp());
-                cf2->setPCTimeStamp(d.count());
-            }
+            set_frame(m_pimpl->vs_rgb, cf2);
         }
         else if(!is_running_depth && is_running_rgb)
         {
             // RGB
-            openni::VideoFrameRef* rgb_frame = new openni::VideoFrameRef();
-            m_pimpl->vs_rgb.readFrame(rgb_frame);
-            
-            if(rgb_frame->isValid() && (cf1 != nullptr))
-            {
-                drivers::camera::EPixelFormat rgb_pixfmt = OpenNIToPixelFormat(*rgb_frame);
-                cf1->create(rgb_frame, std::bind(&drivers::camera::OpenNI::OpenNIAPIPimpl::frame_release, m_pimpl.get(), std::placeholders::_1), (uint8_t*)rgb_frame->getData(), rgb_frame->getWidth(), rgb_frame->getHeight(), rgb_pixfmt, rgb_frame->getStrideInBytes());
-                cf1->setFrameCounter(rgb_frame->getFrameIndex());
-                cf1->setTimeStamp(rgb_frame->getTimestamp());
-                cf1->setPCTimeStamp(d.count());
-            }
+            set_frame(m_pimpl->vs_rgb, cf1);
         }
         else if(is_running_depth && !is_running_rgb)
         {
             // Depth
-            openni::VideoFrameRef* depth_frame = new openni::VideoFrameRef();
-            m_pimpl->vs_depth.readFrame(depth_frame);
-            
-            if(depth_frame->isValid() && (cf1 != nullptr))
-            {
-                drivers::camera::EPixelFormat depth_pixfmt = OpenNIToPixelFormat(*depth_frame);
-                cf1->create(depth_frame, std::bind(&drivers::camera::OpenNI::OpenNIAPIPimpl::frame_release, m_pimpl.get(), std::placeholders::_1), (uint8_t*)depth_frame->getData(), depth_frame->getWidth(), depth_frame->getHeight(), depth_pixfmt, depth_frame->getStrideInBytes());
-                cf1->setFrameCounter(depth_frame->getFrameIndex());
-                cf1->setTimeStamp(depth_frame->getTimestamp());
-                cf1->setPCTimeStamp(d.count());
-            }
+            set_frame(m_pimpl->vs_depth, cf1);
         }
         else
         {
             // nothing?
+            return false;
         }        
     }
     

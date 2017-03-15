@@ -250,7 +250,9 @@ public:
     /**
      * Create on the heap with manual parameters.
      */
-    inline FrameBuffer(std::size_t awidth, std::size_t aheight, EPixelFormat apixfmt = EPixelFormat::PIXEL_FORMAT_MONO8, std::size_t astride = 0) : associated_buffer(nullptr), memaccess(nullptr)
+    inline FrameBuffer(std::size_t awidth, std::size_t aheight, 
+                       EPixelFormat apixfmt = EPixelFormat::PIXEL_FORMAT_MONO8, 
+                       std::size_t astride = 0) : associated_buffer(nullptr), memaccess(nullptr)
     {
         create(awidth, aheight, apixfmt, astride); 
     }
@@ -258,15 +260,20 @@ public:
     /**
      * Create with external buffer.
      */
-    inline FrameBuffer(uint8_t* abuffer, std::size_t awidth, std::size_t aheight, EPixelFormat apixfmt = EPixelFormat::PIXEL_FORMAT_MONO8, std::size_t astride = 0) : associated_buffer(nullptr), memaccess(nullptr)
+    inline FrameBuffer(uint8_t* abuffer, std::size_t awidth, std::size_t aheight, 
+                       EPixelFormat apixfmt = EPixelFormat::PIXEL_FORMAT_MONO8, 
+                       std::size_t astride = 0) : associated_buffer(nullptr), memaccess(nullptr)
     { 
-        create(abuffer, awidth, aheight, apixfmt, astride); 
+        create(abuffer, awidth, aheight, apixfmt, astride);
     }
     
     /**
      * Create with an external object and its deleter.
      */
-    inline FrameBuffer(void* extobject, std::function<void (void*)> adeleter, uint8_t* abuffer, std::size_t awidth, std::size_t aheight, EPixelFormat apixfmt = EPixelFormat::PIXEL_FORMAT_MONO8, std::size_t astride = 0) : associated_buffer(nullptr), memaccess(nullptr)
+    inline FrameBuffer(void* extobject, std::function<void (void*)> adeleter, 
+                       uint8_t* abuffer, std::size_t awidth, std::size_t aheight, 
+                       EPixelFormat apixfmt = EPixelFormat::PIXEL_FORMAT_MONO8, 
+                       std::size_t astride = 0) : associated_buffer(nullptr), memaccess(nullptr)
     {
         create(extobject, adeleter, abuffer, awidth, aheight, apixfmt, astride);
     }
@@ -353,62 +360,62 @@ public:
     /**
      * Create on the heap from manual parameters.
      */
-    void create(std::size_t awidth, std::size_t aheight, EPixelFormat apixfmt = EPixelFormat::PIXEL_FORMAT_MONO8, std::size_t astride = 0);
+    void create(std::size_t awidth, std::size_t aheight, 
+                EPixelFormat apixfmt = EPixelFormat::PIXEL_FORMAT_MONO8, 
+                std::size_t astride = 0);
     
     /**
      * Create from memory owned by someone else (no delete).
      */
-    void create(uint8_t* abuffer, std::size_t awidth, std::size_t aheight, EPixelFormat apixfmt = EPixelFormat::PIXEL_FORMAT_MONO8, std::size_t astride = 0);
+    void create(uint8_t* abuffer, std::size_t awidth, std::size_t aheight, 
+                EPixelFormat apixfmt = EPixelFormat::PIXEL_FORMAT_MONO8, 
+                std::size_t astride = 0);
     
     /**
      * Create with an external object and its deleter.
      */
-    void create(void* extobject, std::function<void (void*)> adeleter, uint8_t* abuffer, std::size_t awidth, std::size_t aheight, EPixelFormat apixfmt = EPixelFormat::PIXEL_FORMAT_MONO8, std::size_t astride = 0);
+    void create(void* extobject, std::function<void (void*)> adeleter, 
+                uint8_t* abuffer, std::size_t awidth, std::size_t aheight, 
+                EPixelFormat apixfmt = EPixelFormat::PIXEL_FORMAT_MONO8, 
+                std::size_t astride = 0);
     
     /**
      * Release resources.
      */
-    void release() 
-    { 
-        if(isValid())
-        {
-            if(deleter) { deleter(associated_buffer);  }
-            memaccess = nullptr; 
-        }
-    }
+    void release();
     
     inline bool isValid() const { return memaccess != nullptr; }
     
     inline uint8_t* getData() { return memaccess; }
-    inline uint8_t* getData() const { return memaccess; }
+    inline const uint8_t* getData() const { return memaccess; }
     
     inline void copyFrom(const void* ptr)
     {
-        memcpy(getData(), ptr, data_size);
+        memcpy(getData(), ptr, getDataSize());
     }
     
     template<typename T>
     inline T& getPixel(std::size_t x, std::size_t y)
     {
-        return *(((T*)(memaccess)) + (y * getStridePixels() + x)); 
+        return *ptr<T>(x,y);
     }
     
     template<typename T>
     inline const T& getPixel(std::size_t x, std::size_t y) const
     {
-        return *(((T*)(memaccess)) + (y * getStridePixels() + x)); 
+        return *ptr<T>(x,y);
     }
     
     template<typename T>
     inline T& getPixel(std::size_t idx)
     {
-        return *(((T*)(memaccess)) + idx); 
+        return *((reinterpret_cast<T*>(getData())) + idx); 
     }
     
     template<typename T>
     inline const T& getPixel(std::size_t idx) const
     {
-        return *(((T*)(memaccess)) + idx);
+        return *((reinterpret_cast<const T*>(getData())) + idx);
     }
     
     inline std::size_t getDataSize() const { return data_size; }
@@ -499,6 +506,18 @@ public:
     }
 #endif // CAMERA_DRIVERS_HAVE_CEREAL
 private:
+    template<typename T>
+    inline T* ptr(std::size_t x, std::size_t y)
+    {
+        return (T*)( ((uint8_t*)getData()) + y * getStride()) + x;
+    }
+    
+    template<typename T>
+    inline const T* ptr(std::size_t x, std::size_t y) const
+    {
+        return (const T*)( ((const uint8_t*)getData()) + y * getStride()) + x;
+    }
+    
     void create_byte_array(std::size_t nbytes)
     {
         memaccess = new uint8_t[nbytes];
