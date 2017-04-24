@@ -566,7 +566,7 @@ void drivers::camera::OpenNI::getIRIntrinsics(float& fx, float& fy, float& u0, f
 }
     
 #ifdef CAMERA_DRIVERS_HAVE_CAMERA_MODELS
-void drivers::camera::OpenNI::getRGBIntrinsics(::camera::PinholeCameraModel<float>& cam) const
+void drivers::camera::OpenNI::getRGBIntrinsics(cammod::PinholeDisparity<float>& cam) const
 {
     const int frameWidth = m_pimpl->vs_rgb.getVideoMode().getResolutionX();
     const int frameHeight = m_pimpl->vs_rgb.getVideoMode().getResolutionY();
@@ -576,9 +576,9 @@ void drivers::camera::OpenNI::getRGBIntrinsics(::camera::PinholeCameraModel<floa
     const float fy = frameHeight / (2.0f * std::tan (vFov / 2.0f));
     const float u0 = (float)frameWidth / 2.0f;
     const float v0 = (float)frameHeight / 2.0f;
-    cam = ::camera::PinholeCameraModel<float>(fx,fy,u0,v0,(float)frameWidth,(float)frameHeight);
+    cam = cammod::PinholeDisparity<float>(fx,fy,u0,v0,(float)frameWidth,(float)frameHeight);
 }
-void drivers::camera::OpenNI::getDepthIntrinsics(::camera::PinholeCameraModel<float>& cam) const
+void drivers::camera::OpenNI::getDepthIntrinsics(cammod::PinholeDisparity<float>& cam) const
 {
     const int frameWidth = m_pimpl->vs_depth.getVideoMode().getResolutionX();
     const int frameHeight = m_pimpl->vs_depth.getVideoMode().getResolutionY();
@@ -588,9 +588,9 @@ void drivers::camera::OpenNI::getDepthIntrinsics(::camera::PinholeCameraModel<fl
     const float fy = frameHeight / (2.0f * std::tan (vFov / 2.0f));
     const float u0 = (float)frameWidth / 2.0f;
     const float v0 = (float)frameHeight / 2.0f;
-    cam = ::camera::PinholeCameraModel<float>(fx,fy,u0,v0,(float)frameWidth,(float)frameHeight);
+    cam = cammod::PinholeDisparity<float>(fx,fy,u0,v0,(float)frameWidth,(float)frameHeight);
 }
-void drivers::camera::OpenNI::getIRIntrinsics(::camera::PinholeCameraModel<float>& cam) const
+void drivers::camera::OpenNI::getIRIntrinsics(cammod::PinholeDisparity<float>& cam) const
 {
     const int frameWidth = m_pimpl->vs_ir.getVideoMode().getResolutionX();
     const int frameHeight = m_pimpl->vs_ir.getVideoMode().getResolutionY();
@@ -600,7 +600,7 @@ void drivers::camera::OpenNI::getIRIntrinsics(::camera::PinholeCameraModel<float
     const float fy = frameHeight / (2.0f * std::tan (vFov / 2.0f));
     const float u0 = (float)frameWidth / 2.0f;
     const float v0 = (float)frameHeight / 2.0f;
-    cam = ::camera::PinholeCameraModel<float>(fx,fy,u0,v0,(float)frameWidth,(float)frameHeight);
+    cam = cammod::PinholeDisparity<float>(fx,fy,u0,v0,(float)frameWidth,(float)frameHeight);
 }
 #endif // CAMERA_DRIVERS_HAVE_CAMERA_MODELS
 

@@ -284,9 +284,9 @@ void drivers::camera::KinectOne::getRegisteredIntrinsics(float& fx, float& fy, f
 }
 
 #ifdef CAMERA_DRIVERS_HAVE_CAMERA_MODELS
-void drivers::camera::KinectOne::getRegistereIntrinsics(::camera::PinholeCameraModel<float>& cam) const
+void drivers::camera::KinectOne::getRegistereIntrinsics(cammod::PinholeDisparity<float>& cam) const
 {
     libfreenect2::Freenect2Device::IrCameraParams params = m_pimpl->dev->getIrCameraParams();
-    cam = ::camera::PinholeCameraModel<float>(params.fx, params.fy, params.cx, params.cy, (float)m_pimpl->depth_width, (float)m_pimpl->depth_height);
+    cam = cammod::PinholeDisparity<float>(params.fx, params.fy, params.cx, params.cy, (float)m_pimpl->depth_width, (float)m_pimpl->depth_height);
 }
 #endif // CAMERA_DRIVERS_HAVE_CAMERA_MODELS

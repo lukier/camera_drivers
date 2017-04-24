@@ -49,7 +49,7 @@
 #include <CameraDrivers.hpp>
 
 #ifdef CAMERA_DRIVERS_HAVE_CAMERA_MODELS
-#include <CameraModels.hpp>
+#include <CameraModels/CameraModels.hpp>
 #endif // CAMERA_DRIVERS_HAVE_CAMERA_MODELS
 
 namespace openni
@@ -168,9 +168,9 @@ public:
     void getIRIntrinsics(float& fx, float& fy, float& u0, float& v0) const;
     
 #ifdef CAMERA_DRIVERS_HAVE_CAMERA_MODELS
-    void getRGBIntrinsics(::camera::PinholeCameraModel<float>& cam) const;
-    void getDepthIntrinsics(::camera::PinholeCameraModel<float>& cam) const;
-    void getIRIntrinsics(::camera::PinholeCameraModel<float>& cam) const;
+    void getRGBIntrinsics(cammod::PinholeDisparity<float>& cam) const;
+    void getDepthIntrinsics(cammod::PinholeDisparity<float>& cam) const;
+    void getIRIntrinsics(cammod::PinholeDisparity<float>& cam) const;
 #endif // CAMERA_DRIVERS_HAVE_CAMERA_MODELS
     
     virtual bool getFeaturePower(EFeature fidx) { return true; }

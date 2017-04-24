@@ -49,7 +49,7 @@
 #include <CameraDrivers.hpp>
 
 #ifdef CAMERA_DRIVERS_HAVE_CAMERA_MODELS
-#include <CameraModels.hpp>
+#include <CameraModels/CameraModels.hpp>
 #endif // CAMERA_DRIVERS_HAVE_CAMERA_MODELS
 
 namespace drivers
@@ -86,7 +86,7 @@ public:
     void getRegisteredIntrinsics(float& fx, float& fy, float& u0, float& v0) const;
     
 #ifdef CAMERA_DRIVERS_HAVE_CAMERA_MODELS
-    void getRegistereIntrinsics(::camera::PinholeCameraModel<float>& cam) const;
+    void getRegistereIntrinsics(cammod::PinholeDisparity<float>& cam) const;
 #endif // CAMERA_DRIVERS_HAVE_CAMERA_MODELS
 private:
     void image_release(void* img);

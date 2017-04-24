@@ -49,7 +49,7 @@
 #include <CameraDrivers.hpp>
 
 #ifdef CAMERA_DRIVERS_HAVE_CAMERA_MODELS
-#include <CameraModels.hpp>
+#include <CameraModels/CameraModels.hpp>
 #endif // CAMERA_DRIVERS_HAVE_CAMERA_MODELS
 
 namespace drivers
@@ -147,14 +147,14 @@ public:
     void getExtrinsicsColorToDepth(float& tx, float& ty, float&tz, std::array<float,9>* rotMat = nullptr) const;
     
 #ifdef CAMERA_DRIVERS_HAVE_CAMERA_MODELS
-    void getRGBIntrinsics(::camera::PinholeCameraModel<float>& cam) const;
-    void getRGBIntrinsics(::camera::PinholeDisparityBrownConradyCameraModel<float>& cam) const;
-    void getDepthIntrinsics(::camera::PinholeCameraModel<float>& cam) const;
-    void getDepthIntrinsics(::camera::PinholeDisparityBrownConradyCameraModel<float>& cam) const;
-    void getIR1Intrinsics(::camera::PinholeCameraModel<float>& cam) const;
-    void getIR1Intrinsics(::camera::PinholeDisparityBrownConradyCameraModel<float>& cam) const;
-    void getIR2Intrinsics(::camera::PinholeCameraModel<float>& cam) const;
-    void getIR2Intrinsics(::camera::PinholeDisparityBrownConradyCameraModel<float>& cam) const;
+    void getRGBIntrinsics(cammod::PinholeDisparity<float>& cam) const;
+    void getRGBIntrinsics(cammod::PinholeDisparityBrownConrady<float>& cam) const;
+    void getDepthIntrinsics(cammod::PinholeDisparity<float>& cam) const;
+    void getDepthIntrinsics(cammod::PinholeDisparityBrownConrady<float>& cam) const;
+    void getIR1Intrinsics(cammod::PinholeDisparity<float>& cam) const;
+    void getIR1Intrinsics(cammod::PinholeDisparityBrownConrady<float>& cam) const;
+    void getIR2Intrinsics(cammod::PinholeDisparity<float>& cam) const;
+    void getIR2Intrinsics(cammod::PinholeDisparityBrownConrady<float>& cam) const;
 #endif // CAMERA_DRIVERS_HAVE_CAMERA_MODELS
 
     virtual bool getFeaturePower(EFeature fidx) { return true; }

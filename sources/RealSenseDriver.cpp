@@ -501,58 +501,58 @@ void drivers::camera::RealSense::getExtrinsicsColorToDepth(float& tx, float& ty,
 }
 
 #ifdef CAMERA_DRIVERS_HAVE_CAMERA_MODELS
-void drivers::camera::RealSense::getRGBIntrinsics(::camera::PinholeCameraModel<float>& cam) const
+void drivers::camera::RealSense::getRGBIntrinsics(cammod::PinholeDisparity<float>& cam) const
 {
     rs::intrinsics ints = m_pimpl->device->get_stream_intrinsics(m_pimpl->default_color_stream);
-    cam = ::camera::PinholeCameraModel<float>(ints.fx, ints.fy, ints.ppx, ints.ppy, (float)getRGBWidth(), (float)getRGBHeight());
+    cam = cammod::PinholeDisparity<float>(ints.fx, ints.fy, ints.ppx, ints.ppy, (float)getRGBWidth(), (float)getRGBHeight());
 }
 
-void drivers::camera::RealSense::getRGBIntrinsics(::camera::PinholeDisparityBrownConradyCameraModel<float>& cam) const
+void drivers::camera::RealSense::getRGBIntrinsics(cammod::PinholeDisparityBrownConrady<float>& cam) const
 {
     rs::intrinsics ints = m_pimpl->device->get_stream_intrinsics(m_pimpl->default_color_stream);
-    cam = ::camera::PinholeDisparityBrownConradyCameraModel<float>(ints.fx, ints.fy, ints.ppx, ints.ppy, 
+    cam = cammod::PinholeDisparityBrownConrady<float>(ints.fx, ints.fy, ints.ppx, ints.ppy, 
                                             ints.coeffs[0], ints.coeffs[1], ints.coeffs[2], ints.coeffs[3], ints.coeffs[4], 
                                             (float)getRGBWidth(), (float)getRGBHeight());
 }
 
-void drivers::camera::RealSense::getDepthIntrinsics(::camera::PinholeCameraModel<float>& cam) const
+void drivers::camera::RealSense::getDepthIntrinsics(cammod::PinholeDisparity<float>& cam) const
 {
     rs::intrinsics ints = m_pimpl->device->get_stream_intrinsics(m_pimpl->default_depth_stream);
-    cam = ::camera::PinholeCameraModel<float>(ints.fx, ints.fy, ints.ppx, ints.ppy, (float)getDepthWidth(), (float)getDepthHeight());
+    cam = cammod::PinholeDisparity<float>(ints.fx, ints.fy, ints.ppx, ints.ppy, (float)getDepthWidth(), (float)getDepthHeight());
 }
 
-void drivers::camera::RealSense::getDepthIntrinsics(::camera::PinholeDisparityBrownConradyCameraModel<float>& cam) const
+void drivers::camera::RealSense::getDepthIntrinsics(cammod::PinholeDisparityBrownConrady<float>& cam) const
 {
     rs::intrinsics ints = m_pimpl->device->get_stream_intrinsics(m_pimpl->default_depth_stream);
-    cam = ::camera::PinholeDisparityBrownConradyCameraModel<float>(ints.fx, ints.fy, ints.ppx, ints.ppy, 
+    cam = cammod::PinholeDisparityBrownConrady<float>(ints.fx, ints.fy, ints.ppx, ints.ppy, 
                                             ints.coeffs[0], ints.coeffs[1], ints.coeffs[2], ints.coeffs[3], ints.coeffs[4], 
                                             (float)getDepthWidth(), (float)getDepthHeight());
 }
 
-void drivers::camera::RealSense::getIR1Intrinsics(::camera::PinholeCameraModel<float>& cam) const
+void drivers::camera::RealSense::getIR1Intrinsics(cammod::PinholeDisparity<float>& cam) const
 {
     rs::intrinsics ints = m_pimpl->device->get_stream_intrinsics(m_pimpl->default_ir1_stream);
-    cam = ::camera::PinholeCameraModel<float>(ints.fx, ints.fy, ints.ppx, ints.ppy, (float)getIR1Width(), (float)getIR1Height());
+    cam = cammod::PinholeDisparity<float>(ints.fx, ints.fy, ints.ppx, ints.ppy, (float)getIR1Width(), (float)getIR1Height());
 }
 
-void drivers::camera::RealSense::getIR1Intrinsics(::camera::PinholeDisparityBrownConradyCameraModel<float>& cam) const
+void drivers::camera::RealSense::getIR1Intrinsics(cammod::PinholeDisparityBrownConrady<float>& cam) const
 {
     rs::intrinsics ints = m_pimpl->device->get_stream_intrinsics(m_pimpl->default_ir1_stream);
-    cam = ::camera::PinholeDisparityBrownConradyCameraModel<float>(ints.fx, ints.fy, ints.ppx, ints.ppy, 
+    cam = cammod::PinholeDisparityBrownConrady<float>(ints.fx, ints.fy, ints.ppx, ints.ppy, 
                                             ints.coeffs[0], ints.coeffs[1], ints.coeffs[2], ints.coeffs[3], ints.coeffs[4], 
                                             (float)getIR1Width(), (float)getIR1Height());
 }
 
-void drivers::camera::RealSense::getIR2Intrinsics(::camera::PinholeCameraModel<float>& cam) const
+void drivers::camera::RealSense::getIR2Intrinsics(cammod::PinholeDisparity<float>& cam) const
 {
     rs::intrinsics ints = m_pimpl->device->get_stream_intrinsics(m_pimpl->default_ir2_stream);
-    cam = ::camera::PinholeCameraModel<float>(ints.fx, ints.fy, ints.ppx, ints.ppy, (float)getIR2Width(), (float)getIR2Height());
+    cam = cammod::PinholeDisparity<float>(ints.fx, ints.fy, ints.ppx, ints.ppy, (float)getIR2Width(), (float)getIR2Height());
 }
 
-void drivers::camera::RealSense::getIR2Intrinsics(::camera::PinholeDisparityBrownConradyCameraModel<float>& cam) const
+void drivers::camera::RealSense::getIR2Intrinsics(cammod::PinholeDisparityBrownConrady<float>& cam) const
 {
     rs::intrinsics ints = m_pimpl->device->get_stream_intrinsics(m_pimpl->default_ir2_stream);
-    cam = ::camera::PinholeDisparityBrownConradyCameraModel<float>(ints.fx, ints.fy, ints.ppx, ints.ppy, 
+    cam = cammod::PinholeDisparityBrownConrady<float>(ints.fx, ints.fy, ints.ppx, ints.ppy, 
                                             ints.coeffs[0], ints.coeffs[1], ints.coeffs[2], ints.coeffs[3], ints.coeffs[4], 
                                             (float)getIR2Width(), (float)getIR2Height());
 }
