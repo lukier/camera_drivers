@@ -37,7 +37,7 @@
 
 #include <RealSenseDriver.hpp>
 
-#include <librealsense/rs.hpp>
+#include <librealsense2/rs.hpp>
 
 drivers::camera::RealSense::RealSenseException::RealSenseException(int status, const char* file, int line)
 {
@@ -46,22 +46,22 @@ drivers::camera::RealSense::RealSenseException::RealSenseException(int status, c
     errormsg = ss.str();
 }
 
-#define RS_CHECK_ERROR(err_code) { if(err_code != openni::STATUS_OK) { throw OpenNIException(err_code, __FILE__, __LINE__); } }
+#define RS_CHECK_ERROR(err_code) { if(err_code != openni::STATUS_OK) { throw RealSenseException(err_code, __FILE__, __LINE__); } }
 
-static inline bool getRSOption(drivers::camera::EFeature fidx, rs::option& opt, bool isauto = false)
+static inline bool getRSOption(drivers::camera::EFeature fidx, rs2_option& opt, bool isauto = false)
 {
     switch(fidx)
     {
-        case drivers::camera::EFeature::BRIGHTNESS: opt = rs::option::color_brightness; return true;
-        case drivers::camera::EFeature::EXPOSURE: opt = rs::option::color_enable_auto_exposure; return true;
-        case drivers::camera::EFeature::SHARPNESS: opt = rs::option::color_sharpness; return true;
-        case drivers::camera::EFeature::WHITE_BALANCE: if(!isauto) { opt = rs::option::color_white_balance; } else { opt = rs::option::color_white_balance; } return true;
-        case drivers::camera::EFeature::HUE: opt = rs::option::color_hue; return true;
-        case drivers::camera::EFeature::SATURATION: opt = rs::option::color_saturation; return true;
-        case drivers::camera::EFeature::GAMMA: opt = rs::option::color_gamma; return true;
-        case drivers::camera::EFeature::SHUTTER: opt = rs::option::color_exposure; return true;
-        case drivers::camera::EFeature::GAIN: opt = rs::option::color_gain; return true;
-        case drivers::camera::EFeature::TEMPERATURE: opt = rs::option::color_backlight_compensation; return true;
+        case drivers::camera::EFeature::BRIGHTNESS: opt = RS2_OPTION_BRIGHTNESS; return true;
+        case drivers::camera::EFeature::EXPOSURE: opt = RS2_OPTION_ENABLE_AUTO_EXPOSURE; return true;
+        case drivers::camera::EFeature::SHARPNESS: opt = RS2_OPTION_SHARPNESS; return true;
+        case drivers::camera::EFeature::WHITE_BALANCE: if(!isauto) { opt = RS2_OPTION_WHITE_BALANCE; } else { opt = RS2_OPTION_ENABLE_AUTO_WHITE_BALANCE; } return true;
+        case drivers::camera::EFeature::HUE: opt = RS2_OPTION_HUE; return true;
+        case drivers::camera::EFeature::SATURATION: opt = RS2_OPTION_SATURATION; return true;
+        case drivers::camera::EFeature::GAMMA: opt = RS2_OPTION_GAMMA; return true;
+        case drivers::camera::EFeature::SHUTTER: opt = RS2_OPTION_CONTRAST; return true;
+        case drivers::camera::EFeature::GAIN: opt = RS2_OPTION_GAIN; return true;
+        case drivers::camera::EFeature::TEMPERATURE: opt = RS2_OPTION_BACKLIGHT_COMPENSATION; return true;
         default: return false;
     }
 }
@@ -69,7 +69,12 @@ static inline bool getRSOption(drivers::camera::EFeature fidx, rs::option& opt, 
 
 struct drivers::camera::RealSense::RealSenseAPIPimpl
 {
-    RealSenseAPIPimpl() : color_valid(false), depth_valid(false), ir1_valid(false), ir2_valid(false), device(nullptr)
+    RealSenseAPIPimpl() : 
+      color_valid(false), depth_valid(false), ir1_valid(false), ir2_valid(false),
+      ctx(),
+      pipe(ctx),
+      cfg(),
+      dev()
     {
         
     }
@@ -85,16 +90,16 @@ struct drivers::camera::RealSense::RealSenseAPIPimpl
     }
     
     bool color_valid, depth_valid, ir1_valid, ir2_valid;
-    rs::stream default_color_stream;
-    rs::stream default_depth_stream;
-    rs::stream default_ir1_stream;
-    rs::stream default_ir2_stream;
     
-    rs::context ctx;
-    rs::device* device;
-    rs::intrinsics int_color;
-    rs::intrinsics int_depth;
-    rs::extrinsics ext_depth_to_color;
+    rs2::context ctx;
+    rs2::pipeline pipe;
+    rs2::config cfg;
+    rs2::device dev;
+    rs2::pipeline_profile profile;
+    
+    rs2::stream_profile sp_depth;
+    rs2::stream_profile sp_rgb;
+    rs2::stream_profile sp_ir;
 };
 
 
@@ -112,35 +117,64 @@ void drivers::camera::RealSense::open(unsigned int idx)
 {
     if(isOpened()) { return; }
     
-    if(m_pimpl->ctx.get_device_count() == 0) 
+    rs2::device_list devlist = m_pimpl->ctx.query_devices();
+    
+    if(devlist.size() == 0) 
     {
         throw std::runtime_error("No RealSense devices");
     }
-        
-    m_pimpl->device = m_pimpl->ctx.get_device(idx);
     
-    m_cinfo.SerialNumber = std::string(m_pimpl->device->get_serial());
+    m_pimpl->dev = devlist[idx];
+    
     m_cinfo.InterfaceType = CameraInfo::CameraInterface::USB;
     m_cinfo.IsColorCamera = true;
-    m_cinfo.ModelName = std::string(m_pimpl->device->get_name());
     m_cinfo.VendorName = std::string("Intel");
-    m_cinfo.SensorInfo = std::string(m_pimpl->device->get_usb_port_id());
     m_cinfo.SensorResolution = std::string("NA");
     m_cinfo.DriverName = std::string("libRealSense");
-    m_cinfo.FirmwareVersion = std::string(m_pimpl->device->get_firmware_version());
-    if(m_pimpl->device->supports(rs::camera_info::build_date))
+    m_cinfo.FirmwareBuildTime = std::string("NA");
+    
+    if(m_pimpl->dev.supports(RS2_CAMERA_INFO_SERIAL_NUMBER))
     {
-        m_cinfo.FirmwareBuildTime = std::string(m_pimpl->device->get_info(rs::camera_info::build_date));
+        m_cinfo.SerialNumber = std::string(m_pimpl->dev.get_info(RS2_CAMERA_INFO_SERIAL_NUMBER));
     }
     else
     {
-        m_cinfo.FirmwareBuildTime = std::string("NA");
+        m_cinfo.SerialNumber = std::string("NA");
     }
+
+    if(m_pimpl->dev.supports(RS2_CAMERA_INFO_NAME))
+    {
+        m_cinfo.ModelName = std::string(m_pimpl->dev.get_info(RS2_CAMERA_INFO_NAME));
+    }
+    else
+    {
+        m_cinfo.ModelName = std::string("NA");
+    }
+    
+    if(m_pimpl->dev.supports(RS2_CAMERA_INFO_ADVANCED_MODE))
+    {
+        m_cinfo.SensorInfo = std::string(m_pimpl->dev.get_info(RS2_CAMERA_INFO_ADVANCED_MODE));
+    }
+    else
+    {
+        m_cinfo.SensorInfo = std::string("NA");
+    }
+    
+    if(m_pimpl->dev.supports(RS2_CAMERA_INFO_ADVANCED_MODE))
+    {
+        m_cinfo.FirmwareVersion = std::string(m_pimpl->dev.get_info(RS2_CAMERA_INFO_ADVANCED_MODE));
+    }
+    else
+    {
+        m_cinfo.FirmwareVersion = std::string("NA");
+    }
+    
+    m_pimpl->cfg.enable_device(m_cinfo.SerialNumber);
 }
 
 bool drivers::camera::RealSense::isOpenedImpl() const
 {
-    return m_pimpl->device != nullptr;
+    return m_pimpl->dev.get() != nullptr; 
 }
 
 void drivers::camera::RealSense::close()
@@ -154,36 +188,32 @@ void drivers::camera::RealSense::close()
     
     if(m_pimpl->depth_valid)
     {
-        m_pimpl->device->disable_stream(rs::stream::depth);
         m_pimpl->depth_valid = false;
     }
     
     if(m_pimpl->color_valid)
     {
-        m_pimpl->device->disable_stream(rs::stream::color);
         m_pimpl->color_valid = false;
     }
     
     if(m_pimpl->ir1_valid)
     {
-        m_pimpl->device->disable_stream(rs::stream::infrared);
         m_pimpl->ir1_valid = false;
     }
     
     if(m_pimpl->ir2_valid)
     {
-        m_pimpl->device->disable_stream(rs::stream::infrared2);
         m_pimpl->ir2_valid = false;
     }
     
-    m_pimpl->device = nullptr;
+    m_pimpl->dev = rs2::device(); // reset
 }
 
 void drivers::camera::RealSense::start()
 {
     if(isStarted()) { return; }
     
-    m_pimpl->device->start();
+    m_pimpl->profile = m_pimpl->pipe.start(m_pimpl->cfg);
     
     is_running = true;
 }
@@ -194,69 +224,72 @@ void drivers::camera::RealSense::stop()
     
     is_running = false;
     
-    m_pimpl->device->stop();
+    m_pimpl->pipe.stop();
 }
 
-void drivers::camera::RealSense::setDepthMode(std::size_t w, std::size_t h, unsigned int fps, bool aligned_to_color, bool aligned_to_rectified_color)
+void drivers::camera::RealSense::setDepthMode(std::size_t w, std::size_t h, unsigned int fps, 
+                                              bool aligned_to_color, bool aligned_to_rectified_color)
 {
     if(!isOpened()) { return; }
     
     if(aligned_to_rectified_color)
     {
-        m_pimpl->default_depth_stream = rs::stream::depth_aligned_to_rectified_color;
+        // TODO FIXME
     }
     else if(aligned_to_color)
     {
-        m_pimpl->default_depth_stream = rs::stream::depth_aligned_to_color;
+      // TODO FIXME
     }
     else
     {
-        m_pimpl->default_depth_stream = rs::stream::depth;
+      // TODO FIXME
     }
     
-    m_pimpl->device->enable_stream(rs::stream::depth, w, h, rs::format::z16, fps);
+    m_pimpl->cfg.enable_stream(RS2_STREAM_DEPTH, w, h, RS2_FORMAT_Z16, fps);
     
     m_pimpl->depth_valid = true;
 }
 
-void drivers::camera::RealSense::setRGBMode(std::size_t w, std::size_t h, unsigned int fps, drivers::camera::EPixelFormat pixfmt, bool rectified, bool aligned_to_depth)
+void drivers::camera::RealSense::setRGBMode(std::size_t w, std::size_t h, unsigned int fps, 
+                                            drivers::camera::EPixelFormat pixfmt, 
+                                            bool rectified, bool aligned_to_depth)
 {
     if(!isOpened()) { return; }
     
     if(aligned_to_depth)
     {
-        m_pimpl->default_color_stream = rs::stream::color_aligned_to_depth;
+        // TODO FIXME
     }
     else if(rectified)
     {
-        m_pimpl->default_color_stream = rs::stream::rectified_color;
+        // TODO FIXME
     }
     else
     {
-        m_pimpl->default_color_stream = rs::stream::color;
+        // TODO FIXME
     }
     
-    rs::format rsfmt = rs::format::rgb8;
+    rs2_format rsfmt = rs2_format::RS2_FORMAT_RGB8;
     
     switch(pixfmt)
     {
         case EPixelFormat::PIXEL_FORMAT_MONO8:
-            rsfmt = rs::format::y8;
+            rsfmt = rs2_format::RS2_FORMAT_Y8;
             break;
         case EPixelFormat::PIXEL_FORMAT_MONO16:
-            rsfmt = rs::format::y16;
+            rsfmt = rs2_format::RS2_FORMAT_Y16;
             break;
         case EPixelFormat::PIXEL_FORMAT_RGB8:
-            rsfmt = rs::format::rgb8;
+            rsfmt = rs2_format::RS2_FORMAT_RGB8;
             break;
         case EPixelFormat::PIXEL_FORMAT_BGR8:
-            rsfmt = rs::format::bgr8;
+            rsfmt = rs2_format::RS2_FORMAT_BGR8;
             break;
         default:
             throw std::runtime_error("Unsupported pixel format");
     }
     
-    m_pimpl->device->enable_stream(rs::stream::color, w, h, rsfmt, fps);
+    m_pimpl->cfg.enable_stream(RS2_STREAM_COLOR, w, h, rsfmt, fps);
     
     m_pimpl->color_valid = true;
 }
@@ -265,9 +298,7 @@ void drivers::camera::RealSense::setIR1Mode(std::size_t w, std::size_t h, unsign
 {
     if(!isOpened()) { return; }
     
-    m_pimpl->default_ir1_stream = rs::stream::infrared;
-    
-    m_pimpl->device->enable_stream(rs::stream::infrared, w, h, rs::format::y16, fps);
+    m_pimpl->cfg.enable_stream(RS2_STREAM_INFRARED, w, h, RS2_FORMAT_Y16, fps);
     
     m_pimpl->ir1_valid = true;
 }
@@ -276,9 +307,7 @@ void drivers::camera::RealSense::setIR2Mode(std::size_t w, std::size_t h, unsign
 {
     if(!isOpened()) { return; }
     
-    m_pimpl->default_ir2_stream = rs::stream::infrared2;
-    
-    m_pimpl->device->enable_stream(rs::stream::infrared2, w, h, rs::format::y16, fps);
+    m_pimpl->cfg.enable_stream(RS2_STREAM_INFRARED, w, h, RS2_FORMAT_Y16, fps);
     
     m_pimpl->ir2_valid = true;
 }
@@ -287,7 +316,8 @@ std::size_t drivers::camera::RealSense::getRGBWidth() const
 {
     if(m_pimpl->color_valid)
     {
-        return m_pimpl->device->get_stream_width(rs::stream::color);
+        // TODO FIXME
+        return 0;
     }
     else
     {
@@ -299,7 +329,8 @@ std::size_t drivers::camera::RealSense::getRGBHeight() const
 {
     if(m_pimpl->color_valid)
     {
-        return m_pimpl->device->get_stream_height(rs::stream::color);
+        // TODO FIXME
+        return 0;
     }
     else
     {
@@ -309,14 +340,15 @@ std::size_t drivers::camera::RealSense::getRGBHeight() const
 
 drivers::camera::EPixelFormat drivers::camera::RealSense::getRGBPixelFormat() const
 {
-    return drivers::camera::EPixelFormat::PIXEL_FORMAT_RGB8;
+    return drivers::camera::EPixelFormat::PIXEL_FORMAT_RGB8; // TODO FIXME
 }
 
 std::size_t drivers::camera::RealSense::getDepthWidth() const
 {
     if(m_pimpl->depth_valid)
     {
-        return m_pimpl->device->get_stream_width(rs::stream::depth);
+        // TODO FIXME
+        return 0;
     }
     else
     {
@@ -328,7 +360,8 @@ std::size_t drivers::camera::RealSense::getDepthHeight() const
 {
     if(m_pimpl->depth_valid)
     {
-        return m_pimpl->device->get_stream_height(rs::stream::depth);
+        // TODO FIXME
+        return 0;
     }
     else
     {
@@ -345,7 +378,8 @@ std::size_t drivers::camera::RealSense::getIR1Width() const
 {
     if(m_pimpl->ir1_valid)
     {
-        return m_pimpl->device->get_stream_height(rs::stream::infrared);
+        // TODO FIXME
+        return 0;
     }
     else
     {
@@ -357,7 +391,8 @@ std::size_t drivers::camera::RealSense::getIR1Height() const
 {
     if(m_pimpl->ir1_valid)
     {
-        return m_pimpl->device->get_stream_height(rs::stream::infrared);
+        // TODO FIXME
+        return 0;
     }
     else
     {
@@ -374,7 +409,8 @@ std::size_t drivers::camera::RealSense::getIR2Width() const
 {
     if(m_pimpl->ir2_valid)
     {
-        return m_pimpl->device->get_stream_height(rs::stream::infrared2);
+        // TODO FIXME
+        return 0;
     }
     else
     {
@@ -386,7 +422,8 @@ std::size_t drivers::camera::RealSense::getIR2Height() const
 {
     if(m_pimpl->ir2_valid)
     {
-        return m_pimpl->device->get_stream_height(rs::stream::infrared2);
+        // TODO FIXME
+        return 0;
     }
     else
     {
@@ -401,12 +438,15 @@ drivers::camera::EPixelFormat drivers::camera::RealSense::getIR2PixelFormat() co
 
 float drivers::camera::RealSense::getDepthScale() const
 {
-    return m_pimpl->device->get_depth_scale();
+    //return m_pimpl->device->get_depth_scale();
+    // TODO FIXME
+    return 1.0f;
 }
 
 void drivers::camera::RealSense::getRGBIntrinsics(float& fx, float& fy, float& u0, float& v0, std::array<float,5>* dist) const
 {
-    rs::intrinsics ints = m_pimpl->device->get_stream_intrinsics(m_pimpl->default_color_stream);
+#if 0
+    rs2::intrinsics ints = m_pimpl->device->get_stream_intrinsics(m_pimpl->default_color_stream);
     
     fx = ints.fx;
     fy = ints.fy;
@@ -420,11 +460,13 @@ void drivers::camera::RealSense::getRGBIntrinsics(float& fx, float& fy, float& u
             dist->at(i) = ints.coeffs[i];
         }
     }
+#endif
 }
 
 void drivers::camera::RealSense::getDepthIntrinsics(float& fx, float& fy, float& u0, float& v0, std::array<float,5>* dist) const
 {
-    rs::intrinsics ints = m_pimpl->device->get_stream_intrinsics(m_pimpl->default_depth_stream);
+#if 0
+    rs2::intrinsics ints = m_pimpl->device->get_stream_intrinsics(m_pimpl->default_depth_stream);
     
     fx = ints.fx;
     fy = ints.fy;
@@ -438,11 +480,13 @@ void drivers::camera::RealSense::getDepthIntrinsics(float& fx, float& fy, float&
             dist->at(i) = ints.coeffs[i];
         }
     }
+#endif
 }
 
 void drivers::camera::RealSense::getIR1Intrinsics(float& fx, float& fy, float& u0, float& v0, std::array<float,5>* dist) const
 {
-    rs::intrinsics ints = m_pimpl->device->get_stream_intrinsics(m_pimpl->default_ir1_stream);
+#if 0
+    rs2::intrinsics ints = m_pimpl->device->get_stream_intrinsics(m_pimpl->default_ir1_stream);
     
     fx = ints.fx;
     fy = ints.fy;
@@ -456,11 +500,13 @@ void drivers::camera::RealSense::getIR1Intrinsics(float& fx, float& fy, float& u
             dist->at(i) = ints.coeffs[i];
         }
     }
+#endif
 }
 
 void drivers::camera::RealSense::getIR2Intrinsics(float& fx, float& fy, float& u0, float& v0, std::array<float,5>* dist) const
 {
-    rs::intrinsics ints = m_pimpl->device->get_stream_intrinsics(m_pimpl->default_ir2_stream);
+#if 0
+    rs2::intrinsics ints = m_pimpl->device->get_stream_intrinsics(m_pimpl->default_ir2_stream);
     
     fx = ints.fx;
     fy = ints.fy;
@@ -474,11 +520,13 @@ void drivers::camera::RealSense::getIR2Intrinsics(float& fx, float& fy, float& u
             dist->at(i) = ints.coeffs[i];
         }
     }
+#endif
 }
 
 void drivers::camera::RealSense::getExtrinsicsDepthToColor(float& tx, float& ty, float&tz, std::array<float,9>* rotMat) const
 {
-    rs::extrinsics exts = m_pimpl->device->get_extrinsics(m_pimpl->default_depth_stream, m_pimpl->default_color_stream);
+#if 0
+    rs2::extrinsics exts = m_pimpl->device->get_extrinsics(m_pimpl->default_depth_stream, m_pimpl->default_color_stream);
     tx = exts.translation[0];
     ty = exts.translation[1];
     tz = exts.translation[2];
@@ -486,11 +534,13 @@ void drivers::camera::RealSense::getExtrinsicsDepthToColor(float& tx, float& ty,
     {
         for(std::size_t i = 0 ; i < 9 ; ++i) { rotMat->at(i) = exts.rotation[i]; }
     }
+#endif
 }
 
 void drivers::camera::RealSense::getExtrinsicsColorToDepth(float& tx, float& ty, float&tz, std::array<float,9>* rotMat) const
 {
-    rs::extrinsics exts = m_pimpl->device->get_extrinsics(m_pimpl->default_color_stream, m_pimpl->default_depth_stream);
+#if 0
+    rs2::extrinsics exts = m_pimpl->device->get_extrinsics(m_pimpl->default_color_stream, m_pimpl->default_depth_stream);
     tx = exts.translation[0];
     ty = exts.translation[1];
     tz = exts.translation[2];
@@ -498,106 +548,128 @@ void drivers::camera::RealSense::getExtrinsicsColorToDepth(float& tx, float& ty,
     {
         for(std::size_t i = 0 ; i < 9 ; ++i) { rotMat->at(i) = exts.rotation[i]; }
     }
+#endif
 }
 
 #ifdef CAMERA_DRIVERS_HAVE_CAMERA_MODELS
 void drivers::camera::RealSense::getRGBIntrinsics(cammod::PinholeDisparity<float>& cam) const
 {
-    rs::intrinsics ints = m_pimpl->device->get_stream_intrinsics(m_pimpl->default_color_stream);
+#if 0
+    rs2::intrinsics ints = m_pimpl->device->get_stream_intrinsics(m_pimpl->default_color_stream);
     cam = cammod::PinholeDisparity<float>(ints.fx, ints.fy, ints.ppx, ints.ppy, (float)getRGBWidth(), (float)getRGBHeight());
+#endif
 }
 
 void drivers::camera::RealSense::getRGBIntrinsics(cammod::PinholeDisparityBrownConrady<float>& cam) const
 {
-    rs::intrinsics ints = m_pimpl->device->get_stream_intrinsics(m_pimpl->default_color_stream);
+#if 0
+    rs2::intrinsics ints = m_pimpl->device->get_stream_intrinsics(m_pimpl->default_color_stream);
     cam = cammod::PinholeDisparityBrownConrady<float>(ints.fx, ints.fy, ints.ppx, ints.ppy, 
                                             ints.coeffs[0], ints.coeffs[1], ints.coeffs[2], ints.coeffs[3], ints.coeffs[4], 
                                             (float)getRGBWidth(), (float)getRGBHeight());
+#endif
 }
 
 void drivers::camera::RealSense::getDepthIntrinsics(cammod::PinholeDisparity<float>& cam) const
 {
-    rs::intrinsics ints = m_pimpl->device->get_stream_intrinsics(m_pimpl->default_depth_stream);
+#if 0
+    rs2::intrinsics ints = m_pimpl->device->get_stream_intrinsics(m_pimpl->default_depth_stream);
     cam = cammod::PinholeDisparity<float>(ints.fx, ints.fy, ints.ppx, ints.ppy, (float)getDepthWidth(), (float)getDepthHeight());
+#endif
 }
 
 void drivers::camera::RealSense::getDepthIntrinsics(cammod::PinholeDisparityBrownConrady<float>& cam) const
 {
-    rs::intrinsics ints = m_pimpl->device->get_stream_intrinsics(m_pimpl->default_depth_stream);
+#if 0
+    rs2::intrinsics ints = m_pimpl->device->get_stream_intrinsics(m_pimpl->default_depth_stream);
     cam = cammod::PinholeDisparityBrownConrady<float>(ints.fx, ints.fy, ints.ppx, ints.ppy, 
                                             ints.coeffs[0], ints.coeffs[1], ints.coeffs[2], ints.coeffs[3], ints.coeffs[4], 
                                             (float)getDepthWidth(), (float)getDepthHeight());
+#endif
 }
 
 void drivers::camera::RealSense::getIR1Intrinsics(cammod::PinholeDisparity<float>& cam) const
 {
-    rs::intrinsics ints = m_pimpl->device->get_stream_intrinsics(m_pimpl->default_ir1_stream);
+#if 0
+    rs2::intrinsics ints = m_pimpl->device->get_stream_intrinsics(m_pimpl->default_ir1_stream);
     cam = cammod::PinholeDisparity<float>(ints.fx, ints.fy, ints.ppx, ints.ppy, (float)getIR1Width(), (float)getIR1Height());
+#endif
 }
 
 void drivers::camera::RealSense::getIR1Intrinsics(cammod::PinholeDisparityBrownConrady<float>& cam) const
 {
-    rs::intrinsics ints = m_pimpl->device->get_stream_intrinsics(m_pimpl->default_ir1_stream);
+#if 0
+    rs2::intrinsics ints = m_pimpl->device->get_stream_intrinsics(m_pimpl->default_ir1_stream);
     cam = cammod::PinholeDisparityBrownConrady<float>(ints.fx, ints.fy, ints.ppx, ints.ppy, 
                                             ints.coeffs[0], ints.coeffs[1], ints.coeffs[2], ints.coeffs[3], ints.coeffs[4], 
                                             (float)getIR1Width(), (float)getIR1Height());
+#endif
 }
 
 void drivers::camera::RealSense::getIR2Intrinsics(cammod::PinholeDisparity<float>& cam) const
 {
-    rs::intrinsics ints = m_pimpl->device->get_stream_intrinsics(m_pimpl->default_ir2_stream);
+#if 0
+    rs2::intrinsics ints = m_pimpl->device->get_stream_intrinsics(m_pimpl->default_ir2_stream);
     cam = cammod::PinholeDisparity<float>(ints.fx, ints.fy, ints.ppx, ints.ppy, (float)getIR2Width(), (float)getIR2Height());
+#endif
 }
 
 void drivers::camera::RealSense::getIR2Intrinsics(cammod::PinholeDisparityBrownConrady<float>& cam) const
 {
-    rs::intrinsics ints = m_pimpl->device->get_stream_intrinsics(m_pimpl->default_ir2_stream);
+#if 0
+    rs2::intrinsics ints = m_pimpl->device->get_stream_intrinsics(m_pimpl->default_ir2_stream);
     cam = cammod::PinholeDisparityBrownConrady<float>(ints.fx, ints.fy, ints.ppx, ints.ppy, 
                                             ints.coeffs[0], ints.coeffs[1], ints.coeffs[2], ints.coeffs[3], ints.coeffs[4], 
                                             (float)getIR2Width(), (float)getIR2Height());
+#endif
 }
 #endif // CAMERA_DRIVERS_HAVE_CAMERA_MODELS
 
 bool drivers::camera::RealSense::getFeatureAuto(EFeature fidx)
 {
-    rs::option opt;
+#if 0
+    rs2::option opt;
     if(!getRSOption(fidx,opt)) { return false; }
     
     if(m_pimpl->device->supports_option(opt))
     {
         return m_pimpl->device->get_option(opt) > 0.0f;
     }
-    
+#endif   
     return false;
 }
 
 void drivers::camera::RealSense::setFeatureAuto(EFeature fidx, bool b)
 {
-    rs::option opt;
+#if 0
+    rs2::option opt;
     if(!getRSOption(fidx,opt)) { return; }
     
     if(m_pimpl->device->supports_option(opt))
     {
         m_pimpl->device->set_option(opt, b == true ? 1.0 : 0.0);
     }
+#endif
 }
 
 float drivers::camera::RealSense::getFeatureValueAbs(EFeature fidx)
 {
-    rs::option opt;
+#if 0
+    rs2::option opt;
     if(!getRSOption(fidx,opt)) { return 0.0f; }
     
     if(m_pimpl->device->supports_option(opt))
     {
         return m_pimpl->device->get_option(opt);
     }
-    
+#endif
     return 0.0f;
 }
 
 uint32_t drivers::camera::RealSense::getFeatureMin(EFeature fidx)
 {
-    rs::option opt;
+#if 0
+    rs2::option opt;
     if(!getRSOption(fidx,opt)) { return 0; }
     
     double vmin, vmax, vstep;
@@ -607,13 +679,14 @@ uint32_t drivers::camera::RealSense::getFeatureMin(EFeature fidx)
         m_pimpl->device->get_option_range(opt, vmin, vmax, vstep);
         return (uint32_t)vmin;
     }
-    
+#endif
     return 0.0f;
 }
 
 uint32_t drivers::camera::RealSense::getFeatureMax(EFeature fidx)
 {
-    rs::option opt;
+#if 0
+    rs2::option opt;
     if(!getRSOption(fidx,opt)) { return 0; }
     
     double vmin, vmax, vstep;
@@ -623,30 +696,33 @@ uint32_t drivers::camera::RealSense::getFeatureMax(EFeature fidx)
         m_pimpl->device->get_option_range(opt, vmin, vmax, vstep);
         return (uint32_t)vmax;
     }
-    
+#endif
     return 0.0f;
 }
 
 void drivers::camera::RealSense::setFeatureValueAbs(EFeature fidx, float val)
 {
-    rs::option opt;
+#if 0
+    rs2::option opt;
     if(!getRSOption(fidx,opt)) { return; }
     
     if(m_pimpl->device->supports_option(opt))
     {
         m_pimpl->device->set_option(opt, val);
     }
+#endif
 }
 
 bool drivers::camera::RealSense::captureFrameImpl(FrameBuffer* cf1, FrameBuffer* cf2, FrameBuffer* cf3, FrameBuffer* cf4, int64_t timeout)
 {
+#if 0
     // TODO FIXME timeout
     m_pimpl->device->wait_for_frames();
     
     std::chrono::high_resolution_clock::time_point tp = std::chrono::high_resolution_clock::now();
     std::chrono::nanoseconds d = tp.time_since_epoch();
     
-    auto setupFrame = [&](FrameBuffer* cf, rs::stream s, drivers::camera::EPixelFormat pf)
+    auto setupFrame = [&](FrameBuffer* cf, rs2::stream s, drivers::camera::EPixelFormat pf)
     {
         if(cf != nullptr)
         {
@@ -735,6 +811,6 @@ bool drivers::camera::RealSense::captureFrameImpl(FrameBuffer* cf1, FrameBuffer*
     {
         setupFrame(cf1, m_pimpl->default_ir2_stream, getIR2PixelFormat());
     }
-        
+#endif
     return true;
 }
