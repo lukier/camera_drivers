@@ -222,7 +222,7 @@ void drivers::camera::RealSense2::setDepthMode(std::size_t w, std::size_t h, uns
 {
     if(!isOpened()) { return; }
     
-    m_pimpl->cfg.enable_stream(RS2_STREAM_DEPTH, RS2_FORMAT_Z16, fps);
+    m_pimpl->cfg.enable_stream(RS2_STREAM_DEPTH, w, h, RS2_FORMAT_Z16, fps);
 
     m_pimpl->depth_aligned_to_color = aligned_to_color;
     
@@ -266,7 +266,7 @@ void drivers::camera::RealSense2::setRGBMode(std::size_t w, std::size_t h, unsig
             throw std::runtime_error("Unsupported pixel format");
     }
     
-    m_pimpl->cfg.enable_stream(RS2_STREAM_COLOR, rsfmt, fps);
+    m_pimpl->cfg.enable_stream(RS2_STREAM_COLOR, w, h, rsfmt, fps);
     
     m_pimpl->color_valid = true;
 }
@@ -275,7 +275,7 @@ void drivers::camera::RealSense2::setIR1Mode(std::size_t w, std::size_t h, unsig
 {
     if(!isOpened()) { return; }
     
-    m_pimpl->cfg.enable_stream(RS2_STREAM_INFRARED, 1, RS2_FORMAT_Y16, fps);
+    m_pimpl->cfg.enable_stream(RS2_STREAM_INFRARED, 1, w, h, RS2_FORMAT_Y16, fps);
     
     m_pimpl->ir1_valid = true;
 }
@@ -284,7 +284,7 @@ void drivers::camera::RealSense2::setIR2Mode(std::size_t w, std::size_t h, unsig
 {
     if(!isOpened()) { return; }
     
-    m_pimpl->cfg.enable_stream(RS2_STREAM_INFRARED, 2, RS2_FORMAT_Y16, fps);
+    m_pimpl->cfg.enable_stream(RS2_STREAM_INFRARED, 2, w, h, RS2_FORMAT_Y16, fps);
     
     m_pimpl->ir2_valid = true;
 }
