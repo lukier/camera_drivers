@@ -73,7 +73,9 @@ struct drivers::camera::RealSense2::RealSense2FrameHolder
 
 struct drivers::camera::RealSense2::RealSense2APIPimpl
 {
-    RealSense2APIPimpl() : color_valid(false), depth_valid(false), ir1_valid(false), ir2_valid(false), aligner(RS2_STREAM_COLOR)
+    RealSense2APIPimpl() : 
+        color_valid(false), depth_valid(false), ir1_valid(false), ir2_valid(false), 
+        pipe(ctx), aligner(RS2_STREAM_COLOR), rgb_aligned_to_depth(false), depth_aligned_to_color(false)
     {
         
     }
@@ -101,7 +103,8 @@ struct drivers::camera::RealSense2::RealSense2APIPimpl
 
 drivers::camera::RealSense2::RealSense2() : CameraDriverBase(), m_pimpl(new RealSense2APIPimpl()), is_running(false)
 {
-    
+    //rs2::log_to_console(RS2_LOG_SEVERITY_DEBUG);
+    rs2::log_to_console(RS2_LOG_SEVERITY_ERROR);
 }
    
 drivers::camera::RealSense2::~RealSense2()
@@ -144,7 +147,6 @@ void drivers::camera::RealSense2::open(unsigned int idx)
             return std::string("NA");
         }
     };
-    
     
     m_cinfo.SerialNumber = get_info_string(RS2_CAMERA_INFO_SERIAL_NUMBER);
     m_cinfo.InterfaceType = CameraInfo::CameraInterface::USB;
@@ -415,8 +417,7 @@ drivers::camera::EPixelFormat drivers::camera::RealSense2::getIR2PixelFormat() c
 
 float drivers::camera::RealSense2::getDepthScale() const
 {
-    auto sensor = m_pimpl->dev.first<rs2::depth_sensor>();
-    return sensor.get_depth_scale();
+    return m_pimpl->profile.get_device().first<rs2::depth_sensor>().get_depth_scale();
 }
 
 void drivers::camera::RealSense2::getRGBIntrinsics(float& fx, float& fy, float& u0, float& v0, std::array<float,5>* dist) const
@@ -690,12 +691,25 @@ void drivers::camera::RealSense2::setFeatureValueAbs(EFeature fidx, float val)
 bool drivers::camera::RealSense2::captureFrameImpl(FrameBuffer* cf1, FrameBuffer* cf2, FrameBuffer* cf3, 
                                                    FrameBuffer* cf4, int64_t timeout)
 {
-    rs2::frameset frames_pre = m_pimpl->pipe.wait_for_frames(timeout);
+    rs2::frameset frames_pre;
+    if(timeout > 0)
+    {
+        frames_pre = m_pimpl->pipe.wait_for_frames(timeout);
+    }
+    else
+    {
+        if(!m_pimpl->pipe.poll_for_frames(&frames_pre))
+        {
+            return false;
+        }
+    }
+    
     rs2::frameset frames_post;
     
     const std::chrono::high_resolution_clock::time_point tp = std::chrono::high_resolution_clock::now();
     
-    if(frames_pre.size() == 0) { return false; } // timeout
+    if(frames_pre.size() == 0) 
+    { return false; } // timeout
     
     const std::chrono::nanoseconds d = tp.time_since_epoch();
     

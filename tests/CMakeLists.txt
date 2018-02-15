@@ -36,6 +36,9 @@ cmake_minimum_required(VERSION 3.1)
 find_package(GTest REQUIRED QUIET)
 include_directories(${GTEST_INCLUDE_DIR})
 
+# OpenCV
+find_package(OpenCV QUIET)
+
 # =========================================================================
 
 include_directories(.)
@@ -49,3 +52,10 @@ add_executable(UT_CameraDrivers ${TEST_SOURCES})
 target_link_libraries(UT_CameraDrivers ${GTEST_LIBRARY} ${PROJECT_NAME})
 
 add_test(UT_CameraDrivers UT_CameraDrivers --gtest_output=xml:UT_CameraDrivers.xml)
+
+if(OpenCV_FOUND)
+    add_executable(CameraTest CameraTest.cpp)
+    target_link_libraries(CameraTest PRIVATE ${GTEST_LIBRARY} ${PROJECT_NAME})
+    target_link_libraries(CameraTest PRIVATE ${OpenCV_LIBRARIES})
+    target_include_directories(CameraTest PRIVATE ${OpenCV_INCLUDE_DIRS})
+endif()

@@ -32,8 +32,8 @@
  */
 
 // system
-#include <stdint.h>
-#include <stddef.h>
+#include <cstdint>
+#include <cstddef>
 #include <iostream>
 #include <fstream>
 #include <ctime>
@@ -53,6 +53,7 @@
 #include <OpenNIDriver.hpp>
 #include <PointGreyDriver.hpp>
 #include <RealSenseDriver.hpp>
+#include <RealSense2Driver.hpp>
 #include <V4LDriver.hpp>
 #include <VRMagicDriver.hpp>
 
