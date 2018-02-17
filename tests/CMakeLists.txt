@@ -53,7 +53,7 @@ target_link_libraries(UT_CameraDrivers ${GTEST_LIBRARY} ${PROJECT_NAME})
 
 add_test(UT_CameraDrivers UT_CameraDrivers --gtest_output=xml:UT_CameraDrivers.xml)
 
-if(OpenCV_FOUND)
+if(OpenCV_FOUND AND CAMERADRIVERS_SUPPORTS_REALSENSE2) # just for now
     add_executable(CameraTest CameraTest.cpp)
     target_link_libraries(CameraTest PRIVATE ${GTEST_LIBRARY} ${PROJECT_NAME})
     target_link_libraries(CameraTest PRIVATE ${OpenCV_LIBRARIES})
